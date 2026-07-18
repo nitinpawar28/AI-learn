@@ -1,0 +1,5 @@
+# Pinned for reproducible local + CI builds.
+# mkdocs-material 9.7.7 verified current 2026-07-18 (pulls in mkdocs 1.6.x and
+# pymdown-extensions). NOTE: Material entered maintenance mode Nov 2025
+# (successor "Zensical"; patches expected ~through Nov 2026) — fine for this site.
+mkdocs-material==9.7.7

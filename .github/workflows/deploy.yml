@@ -1,0 +1,51 @@
+# Deploy the MkDocs site to GitHub Pages.
+# Decision (2026-07-18): GitHub-native Pages artifact flow
+# (configure-pages@v5 -> upload-pages-artifact@v3 -> deploy-pages@v4) with the
+# repo's Pages source set to "GitHub Actions" (build_type=workflow), instead of
+# `mkdocs gh-deploy`. No gh-pages branch to maintain; deploys are atomic.
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Build site (strict)
+        run: mkdocs build --strict
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

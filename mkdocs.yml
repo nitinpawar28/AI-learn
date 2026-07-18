@@ -1,0 +1,139 @@
+# AI-learn — MkDocs Material configuration
+# Mermaid: rendered via pymdownx.superfences custom fence (official Material
+# recommendation as of 2026-07-18) — deliberately NOT mkdocs-mermaid2-plugin.
+site_name: AI-learn
+site_description: >-
+  A practical curriculum: LLMs, embeddings & retrieval, the Model Context
+  Protocol (MCP), agents, and the architecture of a real MCP server.
+site_author: Nitin Pawar
+site_url: https://nitinpawar28.github.io/AI-learn/
+
+repo_url: https://github.com/nitinpawar28/AI-learn
+repo_name: nitinpawar28/AI-learn
+edit_uri: ""
+
+copyright: >-
+  Content &copy; 2026 Nitin Pawar &mdash; licensed under
+  <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+
+theme:
+  name: material
+  language: en
+  icon:
+    logo: material/school
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+
+# Make --strict a real gate: orphan pages, broken links, broken anchors all fatal.
+validation:
+  nav:
+    omitted_files: warn
+    not_found: warn
+    absolute_links: warn
+  links:
+    not_found: warn
+    anchors: warn
+    absolute_links: warn
+    unrecognized_links: warn
+
+nav:
+  - Home: index.md
+  - "0. Orientation":
+      - The running example: part0-orientation/running-example.md
+      - The map of everything: part0-orientation/the-map.md
+  - "1. LLM fundamentals":
+      - part1-fundamentals/index.md
+      - Tokens and tokenization: part1-fundamentals/tokens.md
+      - What an LLM actually does: part1-fundamentals/what-llms-do.md
+      - The context window: part1-fundamentals/context-windows.md
+      - Embeddings and similarity: part1-fundamentals/embeddings.md
+      - Prompting basics: part1-fundamentals/prompting-basics.md
+  - "2. Context engineering":
+      - part2-context/index.md
+      - Why raw context is wasteful: part2-context/why-raw-context-fails.md
+      - Retrieval for code: part2-context/rag-for-code.md
+      - Structural minimization: part2-context/structural-minimization.md
+      - Persistent memory: part2-context/persistent-memory.md
+      - Measuring context quality: part2-context/measuring-quality.md
+  - "3. MCP":
+      - part3-mcp/index.md
+      - What problem MCP solves: part3-mcp/why-mcp.md
+      - Tools, resources, and prompts: part3-mcp/primitives.md
+      - Transports: part3-mcp/transports.md
+      - The wire protocol: part3-mcp/wire-protocol.md
+      - Writing an MCP server: part3-mcp/writing-a-server.md
+      - Connecting servers to IDEs: part3-mcp/ide-integration.md
+  - "4. Agents":
+      - part4-agents/index.md
+      - The agent loop: part4-agents/agent-loop.md
+      - Tool calling in depth: part4-agents/tool-calling.md
+      - Agents, subagents, and orchestration: part4-agents/agents-subagents.md
+      - Grounded prompting and composition: part4-agents/grounded-prompting.md
+      - Cost and efficiency: part4-agents/cost-efficiency.md
+      - Safety and judgment: part4-agents/safety.md
+  - "5. Capstone":
+      - part5-capstone/index.md
+      - The whole picture: part5-capstone/architecture.md
+      - "Case study: tree-sitter over Roslyn": part5-capstone/case-tree-sitter-vs-roslyn.md
+      - "Case study: local ONNX over cloud": part5-capstone/case-local-onnx-vs-cloud.md
+      - "Case study: sqlite-vec over a vector DB": part5-capstone/case-sqlite-vec-vs-vector-db.md
+      - "Case study: verify-on-read": part5-capstone/case-verify-on-read.md
+      - "Case study: the dependency fence": part5-capstone/case-dependency-fence.md
+      - "Case study: local-first, no telemetry": part5-capstone/case-local-first.md
+      - "Case study: measure what you ship": part5-capstone/case-measure-what-you-ship.md
+      - How to learn a codebase like this: part5-capstone/learning-a-codebase.md
+  - "6. Reference":
+      - Glossary: part6-reference/glossary.md
+      - Further reading: part6-reference/further-reading.md
+      - Build your own MCP server: part6-reference/build-your-own.md
