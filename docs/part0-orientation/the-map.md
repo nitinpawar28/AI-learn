@@ -2,7 +2,7 @@
 
 Every chapter on this site teaches one stage of a single pipeline: how a question about your code becomes tokens, how those tokens find the right context, how that context travels over a protocol, and how an agent turns the result into an answer you can act on. This page is that pipeline drawn once, end to end.
 
-Use it two ways. First, as orientation: skim the map, read the one-line blurbs, and you will have a skeleton to hang every later chapter on. Second, as a home base: when a chapter deep in Part 4 mentions "minimization" or "the wire protocol", this page tells you where that stage lives and what feeds it. The stage labels on this map are the canonical ones — every part index page repeats its slice of the map using exactly these names.
+Use it two ways. First, as orientation: skim the map, read the one-line blurbs, and you will have a skeleton to hang every later chapter on. Second, as a home base: when a chapter deep in Part 4 mentions "minimization" or "the wire protocol", this page tells you where that stage lives and what feeds it. The stage labels on this map are the canonical ones — the index pages of Parts 1-4 each repeat their slice of the map using exactly these names.
 
 ## The whole curriculum in one picture
 

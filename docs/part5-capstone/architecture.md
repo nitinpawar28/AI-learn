@@ -185,4 +185,4 @@ Each refusal keeps a responsibility in the layer that can actually discharge it.
 5. **"The MCP C# SDK ships version 2.0 tomorrow. What does your migration touch?"**
 
     ??? success "Answer"
-        One project. The SDK is referenced only by `Server`; everything beneath compiles without the protocol, and `DependencyRuleTests.CoreAssembly_HasZeroNonBclReferences` fails the build if the fence is breached. The evals never reference `Server` — they drive the binary over stdio — so they keep working as the migration's safety net. A 2.0 preview already sits alongside stable 1.4.1 (see [Writing an MCP server](../part3-mcp/writing-a-server.md)).
+        One project. The SDK is referenced only by `Server`; everything beneath compiles without the protocol, and `DependencyRuleTests.CoreAssembly_HasZeroNonBclReferences` fails the build if the fence is breached. The evals never reference `Server` — they drive the binary over stdio — so they keep working as the migration's safety net. A major-version preview of the SDK already sits alongside the stable release (see [Writing an MCP server](../part3-mcp/writing-a-server.md)) — the fence exists for exactly that day.
