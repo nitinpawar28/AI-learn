@@ -61,6 +61,14 @@ For the login question against the 37,000-token file, perhaps 1,500 tokens genui
 
 The crucial property of both numbers: they are *task-relative*. The same file is 4% signal for the login question and might be 60% signal for "summarize this file's public API." No fixed preprocessing can be right for every question — which is why serious curation happens at request time, with the task in hand. Keep that thought; it returns with force in [Structural minimization](structural-minimization.md).
 
+```mermaid
+pie title Token budget for the login validation task (37,000-token file)
+    "Signal — tokens the task needs" : 1500
+    "Noise — tokens never needed" : 35500
+```
+
+*Illustrative breakdown using the worked numbers above. Signal-to-noise ratio: ~4%. Waste ratio: ~96%.*
+
 ## The curation taxonomy
 
 **Context curation** is the practice of selecting, shrinking, and verifying what enters the context window, so that signal survives and noise does not. It decomposes into four moves — one per remaining chapter of this part:
@@ -71,6 +79,25 @@ The crucial property of both numbers: they are *task-relative*. The same file is
 4. **Measure** — verify what curation costs in fidelity, because compressing is trivial and compressing *losslessly enough* is the whole discipline. → [Measuring context quality](measuring-quality.md)
 
 The moves compose: retrieve candidates, compress what you retrieved, prepend what you remembered, and measure the pipeline end to end. The fourth move is not garnish — an unmeasured curation pipeline is a machine for silently deleting signal along with noise.
+
+```mermaid
+flowchart LR
+    TASK(["Task + corpus"])
+    R["1. Retrieve
+    fetch only relevant pieces"]
+    C["2. Compress
+    shrink without losing signal"]
+    M["3. Remember
+    prepend persisted facts"]
+    V["4. Measure
+    verify fidelity end-to-end"]
+    CTX(["Curated context
+for the model"])
+
+    TASK --> R --> C --> M --> V --> CTX
+```
+
+*The four moves are ordered and composable — each chapter in Part 2 covers one.*
 
 ## In practice: Sankshep
 

@@ -30,6 +30,23 @@ Corpus frequency is the only criterion. The tokenizer has no notion of grammar, 
 
 ```mermaid
 flowchart LR
+    START(["All individual bytes"])
+    COUNT["Count every adjacent pair<br/>across the training corpus"]
+    MERGE["Merge the most frequent pair<br/>into one new vocabulary entry"]
+    FULL{"Vocabulary full?"}
+    FROZEN(["Frozen vocabulary"])
+
+    START --> COUNT
+    COUNT --> MERGE
+    MERGE --> FULL
+    FULL -- "No" --> COUNT
+    FULL -- "Yes" --> FROZEN
+```
+
+*BPE builds vocabulary bottom-up: it merges pairs by frequency alone, with no grammar or meaning involved. Common strings like `" function"` earn a single entry; rare strings like hex IDs never reach threshold and shatter into fragments.*
+
+```mermaid
+flowchart LR
     TEXT["Raw text<br><i>&quot;The validator rejected it.&quot;</i>"]
     subgraph famA["Model family A"]
         TOKA["Tokenizer A<br>(vocabulary A)"] --> IDA["Token IDs<br>[791, 29722, 17551, 433, 13]<br>= 5 tokens"] --> MODA["Model A"]

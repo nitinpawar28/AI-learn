@@ -2,6 +2,35 @@
 
 Every term below was introduced in **bold**, with a definition, in exactly one chapter of this site. Each entry gives a working definition and links back to the chapter that teaches it — follow the arrow for the full treatment, the diagrams, and the surrounding argument.
 
+The diagram below shows how the major concepts connect. Follow it as a map — the arrows show which concept builds on which.
+
+```mermaid
+flowchart LR
+    TOK["Token"]
+    EMB["Embedding"]
+    CW["Context window"]
+    RAG["RAG
+Retrieve + Rank + Assemble"]
+    MCP["MCP
+protocol layer"]
+    AGENT["Agent
+loop + tools + stop condition"]
+    KPR["Key-point recall
+measure fidelity"]
+    SNR["Signal-to-noise ratio
+diagnose waste"]
+
+    TOK --> CW
+    TOK --> EMB
+    EMB --> RAG
+    CW --> RAG
+    RAG --> MCP
+    MCP --> AGENT
+    RAG --> SNR
+    SNR --> KPR
+    AGENT --> KPR
+```
+
 ## A
 
 **actionable error** — An error message written so that the model's next sampled step can plausibly fix the problem: it names what failed, why, and what to do instead. A 40-line stack trace burns the same tokens and affords no correction. → [Tool calling in depth](../part4-agents/tool-calling.md)
@@ -49,6 +78,10 @@ Every term below was introduced in **bold**, with a definition, in exactly one c
 **context window** — The maximum number of tokens a model can process in one call: everything the model conditions on to produce output, plus the output itself. It is a hard limit — tokens beyond it are not "skimmed"; they are simply not part of the input. → [The context window](../part1-fundamentals/context-windows.md)
 
 **cosine similarity** — The standard score for how close two embeddings are: the dot product of the two vectors divided by the product of their lengths. It measures the angle between them, ignores magnitude, and ranges from −1 to 1. → [Embeddings and similarity](../part1-fundamentals/embeddings.md)
+
+**chunk overlap** — Repeating the last N tokens of one retrieval chunk at the start of the next, to avoid cutting across meaning at a boundary. Syntax-aware chunking on symbol boundaries largely eliminates the need for it; overlap is most useful when a class is split by member and the class signature would otherwise disappear from member chunks. → [Retrieval for code](../part2-context/rag-for-code.md)
+
+**confusion matrix** — A 2×2 table of true positives, false positives, true negatives, and false negatives, used to reason about an evaluator's reliability. In the context of LLM-as-judge: a high false-negative rate means the judge under-counts supported facts (pessimistic); a high false-positive rate means it over-credits unsupported ones (optimistic). Hand-checking a sample tells you which direction your judge errs. → [Measuring context quality](../part2-context/measuring-quality.md)
 
 ## D
 

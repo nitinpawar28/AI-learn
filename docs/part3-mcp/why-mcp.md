@@ -94,13 +94,17 @@ In [Part 0's three-layer frame](../part0-orientation/running-example.md#the-thre
 
 Four boundary lines prevent most misconceptions.
 
-**Not a model API.** MCP never carries your prompt to a model, and no model endpoint speaks it. Two protocols are always in play: the host talks to the model over a model API and to servers over MCP, translating between them. [The wire protocol](wire-protocol.md) draws that double boundary explicitly, because seeing it collapses most of the magic.
+!!! info "Not a model API"
+    MCP never carries your prompt to a model, and no model endpoint speaks it. Two protocols are always in play: the host talks to the model over a model API and to servers over MCP, translating between them. [The wire protocol](wire-protocol.md) draws that double boundary explicitly, because seeing it collapses most of the magic.
 
-**Not an agent framework.** There is no loop in the protocol. A server answers one request at a time; nothing in MCP plans, retries, or chains steps. The loop lives in the client layer, as [the agent loop](../part4-agents/agent-loop.md) shows — a server can be a superb tool inside someone else's loop while containing none of its own.
+!!! info "Not an agent framework"
+    There is no loop in the protocol. A server answers one request at a time; nothing in MCP plans, retries, or chains steps. The loop lives in the client layer, as [the agent loop](../part4-agents/agent-loop.md) shows — a server can be a superb tool inside someone else's loop while containing none of its own.
 
-**Not a way to make a model "know" about your tools.** Models have [exactly two information sources](../part1-fundamentals/what-llms-do.md#only-weights-and-context): frozen weights and the current context. MCP changes neither. The client fetches capability descriptions from servers and places them in the context as [tokens](../part1-fundamentals/tokens.md) — the quoted "know" is doing the work defined in [the anthropomorphism contract](../part1-fundamentals/what-llms-do.md#the-anthropomorphism-contract). The plumbing is standardized; the model still only maps tokens to probabilities.
+!!! info "Not a way to make a model \"know\" about your tools"
+    Models have [exactly two information sources](../part1-fundamentals/what-llms-do.md#only-weights-and-context): frozen weights and the current context. MCP changes neither. The client fetches capability descriptions from servers and places them in the context as [tokens](../part1-fundamentals/tokens.md) — the quoted "know" is doing the work defined in [the anthropomorphism contract](../part1-fundamentals/what-llms-do.md#the-anthropomorphism-contract). The plumbing is standardized; the model still only maps tokens to probabilities.
 
-**Not a library.** MCP is a wire contract, like HTTP. Official SDKs are conveniences; anything that reads and writes the protocol's messages over its transports is a valid implementation — [writing a server](writing-a-server.md) uses that fact to keep SDK churn quarantined at the edge of a codebase.
+!!! info "Not a library"
+    MCP is a wire contract, like HTTP. Official SDKs are conveniences; anything that reads and writes the protocol's messages over its transports is a valid implementation — [writing a server](writing-a-server.md) uses that fact to keep SDK churn quarantined at the edge of a codebase.
 
 ## Status, governance, and SDKs
 

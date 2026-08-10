@@ -106,11 +106,14 @@ The rule in one line: degrade quality gracefully; never degrade safety or honest
 
 ## The five-question bill checklist
 
-1. **What rides in every call that was only needed once?** The multiplier bills history; the biggest wins are recurring blocks — Lever 1.
-2. **Is the prefix cache-stable, and what silently breaks it?** Hunt for timestamps, nondeterministic serialization, edited history.
-3. **Which iterations actually needed the expensive model — and how would you know?** If the answer is a guess, routing needs per-route evals before it needs a router.
-4. **When a dependency goes missing, does spend degrade or evaporate?** A mid-loop crash re-bills the whole run.
-5. **Are efficiency claims measured on what ships, or inferred?** Compression is easy to claim; [measurement](../part2-context/measuring-quality.md) is the discipline.
+!!! tip "Diagnose your agent's bill"
+    Work through these in order — each exposes a different layer of token waste.
+
+    1. **What rides in every call that was only needed once?** The multiplier bills history; the biggest wins are recurring blocks — Lever 1.
+    2. **Is the prefix cache-stable, and what silently breaks it?** Hunt for timestamps, nondeterministic serialization, edited history.
+    3. **Which iterations actually needed the expensive model — and how would you know?** If the answer is a guess, routing needs per-route evals before it needs a router.
+    4. **When a dependency goes missing, does spend degrade or evaporate?** A mid-loop crash re-bills the whole run.
+    5. **Are efficiency claims measured on what ships, or inferred?** Compression is easy to claim; [measurement](../part2-context/measuring-quality.md) is the discipline.
 
 ## Checkpoints
 

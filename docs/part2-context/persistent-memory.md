@@ -17,13 +17,12 @@ What is worth remembering is usually small and dense: decisions and their reason
 
 Every memory system, from a notes file to a hosted product, makes a choice on each of these axes; making the choices explicit is most of the design work.
 
-**Granularity** is the size of one memory unit: a full conversation transcript, a summary of a session, or an atomic one-sentence fact. Transcripts are cheap to write and expensive to reuse — you pay their full token cost at every re-injection, and most of a transcript is noise. Atomic facts cost more thought at write time, but each is individually retrievable for a few dozen tokens.
-
-**Retrieval mode** is how memories get selected for a given request: matched against the current task (by [embedding similarity](../part1-fundamentals/embeddings.md) or substring search), or fetched wholesale by kind ("always include every convention"). Different kinds of memory need different modes — this axis bites hardest, as the mismatch section shows.
-
-**Scoping** is where a memory applies: to every project (global), to one repository, or to one branch. A fact like "the payment module is mid-refactor; ignore the old interfaces" is true on one branch and actively misleading on `main`. Without scoping, a store either pollutes other contexts or forces users to delete true facts.
-
-**Provenance** is where a memory came from and when: a source field and a timestamp. It lets you resolve contradictions (prefer the newer fact), expire stale ones, and audit what the assistant was told when it produced a surprising answer.
+| Axis | What it governs | Sankshep's choice | Gets wrong when missing |
+|------|-----------------|-------------------|------------------------|
+| **Granularity** | Size of one memory unit: transcript / summary / atomic fact | One-sentence atomic facts | Transcripts re-inject full noise every call; summaries lose precision |
+| **Retrieval mode** | How memories are selected: relevance-matched vs. fetched wholesale by category | Episodic facts by `LIKE` relevance; conventions by category unconditionally | Conventions silently vanish — they match nothing in most task texts |
+| **Scoping** | Which contexts a memory applies to: global / repo / branch | Per-branch, plus `global` tier | Branch-specific facts leak into unrelated contexts or pollute `main` |
+| **Provenance** | Where a memory came from and when | `source` field + explicit UTC timestamp | Cannot resolve contradictions, expire stale facts, or audit surprises |
 
 ## Right-sizing retrieval: facts do not need embeddings
 

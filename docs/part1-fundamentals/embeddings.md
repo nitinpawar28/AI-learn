@@ -60,6 +60,32 @@ Embedding bugs rarely throw exceptions. The pipeline runs, results come back, an
 !!! tip "Debugging order"
     If retrieval quality drops after a model or library change, diff these four settings between index and query time before anything else.
 
+```mermaid
+flowchart TD
+    A(["Query arrives"])
+    B{"Same embedding model<br/>used at index and query time?"}
+    FAIL1["❌ Wrong coordinate space —<br/>all scores are meaningless"]
+    C{"Same pooling strategy?<br/>(CLS vs mean)"}
+    FAIL2["❌ Subtly wrong scores —<br/>no error is raised"]
+    D{"Vectors L2-normalized<br/>before storage?"}
+    FAIL3["❌ Dot-product scores skewed<br/>by vector length"]
+    E{"Asymmetric query prefix<br/>applied to queries only?"}
+    FAIL4["❌ Accuracy drop with no<br/>error message"]
+    OK(["✅ Reliable similarity scores"])
+
+    A --> B
+    B -- "No" --> FAIL1
+    B -- "Yes" --> C
+    C -- "No" --> FAIL2
+    C -- "Yes" --> D
+    D -- "No" --> FAIL3
+    D -- "Yes" --> E
+    E -- "No" --> FAIL4
+    E -- "Yes" --> OK
+```
+
+*Each gate fails silently — the pipeline produces numbers without throwing exceptions. Work through the gates in order before debugging anything else.*
+
 ## Index time and query time
 
 A similarity search system runs the expensive work once, ahead of time, and the cheap work on every query. The two lanes must agree on every setting from the previous section:

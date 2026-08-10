@@ -49,6 +49,15 @@ flowchart LR
 
 **Constraints.** Boundaries and an escape hatch: "change only this function", "do not add dependencies", and — most useful of all — "if the context does not contain the answer, say so". Without an out-clause, the most probable continuation for an unanswerable question is a fluent guess.
 
+!!! tip "Quick-reference: the five parts"
+    | Part | Purpose | Failure when missing |
+    |------|---------|---------------------|
+    | Instruction | Names the task precisely | Model answers a plausible task, not your task |
+    | Context | Grounds the answer in your material | Answer is assembled from training data — generic or invented |
+    | Examples | Demonstrates edge-case handling and tone | Output format and label boundaries drift call to call |
+    | Format | States the exact output shape | Downstream code cannot parse inconsistent output |
+    | Constraints | Defines scope and the out-clause | Confident answers beyond the given material, no honest "not found" |
+
 ## What reliably helps — and what is incantation
 
 Each of the five parts helps for a stable, mechanical reason: it narrows the set of high-probability continuations toward answers you can use. Precision in the instruction rules out neighboring tasks; relevant context makes grounded statements more probable than remembered ones; an explicit format collapses a thousand valid phrasings into one.

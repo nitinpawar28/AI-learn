@@ -80,6 +80,21 @@ The messages themselves — `initialize`, `notifications/initialized`, `tools/ca
 
 The decision is usually made for you by one question: *who needs to reach this server?*
 
+```mermaid
+flowchart TD
+    A(["New MCP server"])
+    B{"Will multiple clients or machines<br/>need to connect?"}
+    C{"Does the server need<br/>to run as a shared service?"}
+    STDIO(["stdio<br/>client launches server as subprocess"])
+    HTTP(["Streamable HTTP<br/>server runs independently"])
+
+    A --> B
+    B -- "No — one client, local only" --> STDIO
+    B -- "Yes" --> HTTP
+    C -- "No" --> STDIO
+    C -- "Yes" --> HTTP
+```
+
 | Question | stdio | Streamable HTTP |
 | --- | --- | --- |
 | Who starts the server? | The client, as a subprocess | You or your ops team; it runs on its own |

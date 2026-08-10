@@ -101,6 +101,34 @@ Each failure mode maps to a specific missing guard or a specific unmanaged input
 
 **Result flooding.** A single tool call returns far more than the question needed — a whole file, a thousand search hits — and one lap swamps the window for every lap after it. The guard sits on both sides of the tool boundary: clients truncate oversized results, and well-designed servers return curated results in the first place, which is Part 2's whole argument and a preview of [result design](tool-calling.md). Flooded results are also where untrusted text enters the history, which is [safety's](safety.md) problem to examine.
 
+## Parallel tool calls
+
+Some model APIs support emitting **multiple tool calls in a single continuation** — the model names two or more tools in one turn instead of one. The client executes all of them, collects all results, appends them together, and continues the loop. This is a performance optimization, not a change to the loop's structure: the guards still apply, and the re-send rule still charges input tokens for the entire history on the next lap.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Client
+    participant M as Model API
+    participant S1 as MCP server (search)
+    participant S2 as MCP server (memory)
+
+    C->>M: history + tool definitions
+    M-->>C: two tool_use blocks in one continuation
+    par execute in parallel
+        C->>S1: tools/call — search_code
+        C->>S2: tools/call — recall
+    end
+    S1-->>C: code chunks
+    S2-->>C: stored facts
+    C->>C: append both results to history
+    C->>M: full history re-sent (both results included)
+    M-->>C: final answer
+```
+
+!!! warning
+    Not all model APIs support parallel tool calls. Check the vendor's documentation before relying on fan-out; a client that expects a single call per turn will misparse a multi-call response.
+
 !!! example "In the wild: Sankshep"
     Sankshep — the MCP server from [the running example](../part0-orientation/running-example.md) — sits at the `S` position in the sequence diagram, and nowhere else. It never loops: each of its 8 tools answers exactly one `tools/call` and returns. It never calls a model: its `compose_task_prompt` output is assembled deterministically, and per ADR-0013 a build-time test enforces that no model client can even enter the composition path. Its contribution to the loop is indirect but real — it attacks bloat and result flooding by returning [minimized](../part2-context/structural-minimization.md), budget-packed context instead of raw files, so each lap adds fewer tokens to the history that every later lap re-sends. The loop itself belongs to whichever client invoked it; a tool that stays out of the loop works identically under all of them.
 

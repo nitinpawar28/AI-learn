@@ -61,6 +61,29 @@ The worst case needs three ingredients together: the agent reads attacker-contro
 
 Ranked by what each guarantees, strongest first.
 
+```mermaid
+flowchart TD
+    M1["1. Least privilege
+Cut the blast radius
+Holds regardless of what the model emits"]
+    M2["2. Gate irreversible actions
+Human approval before writes and sends
+Genuine boundary — erodes with repetition"]
+    M3["3. Isolate untrusted content
+Subagent with narrow toolbelt
+Injected text steers a summary, not actions"]
+    M4["4. Unconditional tool validation
+Schema checks, path scoping, one deterministic thing
+Code-level rules injection cannot override"]
+    M5["5. Detect the injection
+Filter instruction-shaped content inbound
+Probabilistic — adversary has unlimited retries"]
+    RULE(["Rule: ranks 2–5 lower success rate;
+only rank 1 bounds what success costs"])
+
+    M1 --> M2 --> M3 --> M4 --> M5 --> RULE
+```
+
 1. **Cut the blast radius.** **Least privilege** — granting a component the minimum access its job needs — is the only defense that holds no matter what the model emits: read-only tools where writes are not needed, scoped credentials, no secrets inside any tool's reach. An injection that succeeds against such a toolbelt steers nothing but prose.
 2. **Gate irreversible actions on a human.** An approval prompt before writes, sends, or spends is a genuine boundary — but one that erodes: a reviewer who has clicked "approve" four hundred times this week is a rubber stamp. Gates work best rare, specific, and explicit about what will happen.
 3. **Isolate untrusted content.** Route attacker-readable material through a [subagent](agents-subagents.md) with a narrow toolbelt, returning only a summary. Injected text can still slant that summary, but the dangerous tools were never in its window's reach.

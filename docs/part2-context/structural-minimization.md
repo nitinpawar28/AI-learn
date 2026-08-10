@@ -19,6 +19,9 @@ Summarization fails three ways for a per-request tool. Non-deterministic: [sampl
 
 Parsing inverts all three: byte-identical output makes the pipeline testable; it runs in milliseconds on a CPU, offline, at zero marginal cost; and the loss is *enumerable* — if the transform is "delete comments", you know precisely what is gone.
 
+!!! tip
+    Use structural minimization for "what does this module expose?" questions. Use retrieval for "find where X is used" and send the raw body for "find the bug in this function" — body collapse deletes exactly the answer to the last question.
+
 !!! note "Settled"
     Nothing in this chapter depends on fast-moving vendor facts: parsing-based compression is ordinary compiler technology and will read the same way in five years.
 

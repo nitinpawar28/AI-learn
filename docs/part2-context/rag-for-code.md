@@ -47,6 +47,15 @@ Here is the trap: hash the raw bytes and your identity is hostage to byte-level 
 
 The fix is to hash *normalized* content: at minimum, convert line endings to a single form first. Including the file path in the hashed key is also worth doing, so that two identical snippets in different files keep distinct identities and their locators stay honest.
 
+## Chunk overlap
+
+Fixed-window retrievers routinely include an overlap — repeating the last N tokens of one window at the start of the next — to avoid cutting across sentence boundaries mid-thought. Code retrievers with syntax-aware chunking mostly do not need it: each chunk is an entire symbol (function, class, method), so there is no mid-meaning cut to patch.
+
+Overlap is still worth considering at one specific seam: large classes that are split into per-member chunks can leave a caller and callee in adjacent chunks with no shared context. A small overlap copying the class signature into each member chunk is cheaper than losing the type relationship entirely. The cost is exact duplication in the index — two chunks with identical leading lines will both rank for queries about the class name, so re-ranking or deduplication must account for it.
+
+!!! tip
+    Start without overlap. Add it only when retrieval evaluation shows that split symbols are landing in results stripped of their enclosing context.
+
 ## Query time: hybrid ranking
 
 Two search modes exist, and for code you want both.
@@ -74,6 +83,29 @@ sequenceDiagram
     T->>T: merge, normalize, blend scores
     T-->>A: top-k chunks with file:line locators
 ```
+
+The blend itself is a weighted sum over normalized scores. Both lanes produce raw scores on different scales, so each is first rescaled to a 0–1 range, then combined:
+
+```mermaid
+flowchart TD
+    Q(["Query text"])
+    SEM["Semantic search
+embedding cosine similarity"]
+    LEX["Lexical search
+BM25 / identifier match"]
+    NS["Normalize 0 → 1"]
+    NL["Normalize 0 → 1"]
+    BLEND["Weighted blend
+α × semantic + (1−α) × lexical"]
+    RANK(["Ranked top-k chunks
+with file:line locators"])
+
+    Q --> SEM --> NS --> BLEND
+    Q --> LEX --> NL --> BLEND
+    BLEND --> RANK
+```
+
+*Sankshep uses α = 0.6 (60% semantic, 40% lexical) when a vector index exists, and falls back to lexical-only when it does not.*
 
 ## Assembling the context
 

@@ -81,9 +81,11 @@ The defense is a **dependency fence**: a hard rule about which projects may refe
 
 What the fence buys, concretely:
 
-- **Upgrades are local.** A breaking SDK release is a one-project migration, not a codebase-wide one.
-- **The domain is testable without a client.** You can unit-test search, storage, and parsing as plain functions — no handshake, no subprocess, no JSON.
-- **The domain is reusable.** The same logic can back a CLI, a library, or a different protocol tomorrow, because nothing in it mentions MCP.
+| Benefit | Without a fence | With a fence |
+|---------|-----------------|-------------|
+| **Upgrades are local** | A breaking SDK release touches every file that imported its types | One project migrates; everything behind the fence recompiles unchanged |
+| **Domain is testable without a client** | Tests need a full MCP handshake and subprocess | Search, storage, and parsing are plain functions, unit-testable in milliseconds |
+| **Domain is reusable** | Logic references SDK types, so it is tied to MCP forever | The same domain logic can back a CLI, a library, or a different protocol |
 
 A fence that lives in a wiki page erodes; the durable version is a fence that lives in a test — an automated check that fails the build the moment a forbidden reference appears. A production example follows in a moment; the full design rationale is in the capstone [dependency fence case study](../part5-capstone/case-dependency-fence.md).
 

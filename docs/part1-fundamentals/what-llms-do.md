@@ -83,6 +83,23 @@ Two consequences shape the rest of the site:
 - **Nothing you send changes the weights.** A correction persists only while it sits in the context; open a fresh conversation and it is gone. The engineering response is [persistent memory](../part2-context/persistent-memory.md), not repetition and hope.
 - **Weights have a cutoff.** They encode nothing about events, library versions, or your codebase's state after training ended. Anything fresher must arrive through the context — which is what Part 2's retrieval machinery is for.
 
+```mermaid
+flowchart LR
+    subgraph TRAIN["Training — happens once, before you"]
+        direction LR
+        T1["Huge text corpus"] --> T2["Adjust billions of weights<br/>to reduce prediction error"]
+        T2 --> T3["Frozen weights<br/>(read-only constants)"]
+    end
+    subgraph INFER["Inference — every prompt you send"]
+        direction LR
+        I1["Your context<br/>(prompt + history)"] --> I2["Forward pass<br/>over frozen weights"]
+        I2 --> I3["Probability distribution<br/>→ one sampled token"]
+    end
+    TRAIN -->|"weights frozen before<br/>you type anything"| INFER
+```
+
+*Training ends once; every conversation you have with the model is inference — the weights never change again.*
+
 ## Only weights and context
 
 Put the last two sections together and you get the most useful sentence in this part: *at inference, a model has exactly two information sources — its frozen weights and the tokens in its [context window](context-windows.md).* There is no third channel: no filesystem, no database, no live web — unless a surrounding program fetches something and pastes the result into the context as tokens.

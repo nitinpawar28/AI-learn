@@ -36,6 +36,9 @@ A model API call is stateless. As covered in [What an LLM actually does](what-ll
 
 So when a chat feels continuous, that is the client's doing: on every turn, it re-sends the system prompt, the tool definitions, and the entire history, with your latest message appended. Turn 10 pays again for turns 1 through 9.
 
+!!! warning
+    Every token in the window is re-sent — and re-billed — on every API call. A 30-turn conversation is not 30 equal bills; it is 30 bills of increasing size. In an agent loop this is the dominant cost driver.
+
 This has a quiet but brutal consequence for cost. A 30-turn conversation is not 30 small bills; it is 30 bills of *increasing* size, because each one contains all its predecessors. In an agent loop, where a single task may take many tool-calling iterations, this multiplier is the dominant cost driver — [Cost and efficiency](../part4-agents/cost-efficiency.md) works the numbers.
 
 ## How big are windows in practice?
@@ -74,6 +77,9 @@ Put the three facts of this chapter side by side:
 3. Quality sags for material buried in the middle of a large context.
 
 Together they demolish the tempting strategy of "just paste everything in." Filling the window costs money on every iteration, crowds out room for the answer, and buries the signal in exactly the region where models perform worst. A window is not a bucket to fill; it is a budget to spend.
+
+!!! tip
+    Place the most important context at the very beginning or end of the window. The U-shaped accuracy curve means material in the middle is the most likely to be missed — especially as the window grows.
 
 That reframing — from *how much can I fit?* to *what has earned its place?* — is the pivot of this entire curriculum. [Why raw context is wasteful](../part2-context/why-raw-context-fails.md) makes the failure concrete with worked numbers, and the rest of Part 2 builds the toolkit: retrieve the right material, compress it structurally, remember durable facts, and measure whether the compressed context still answers questions.
 

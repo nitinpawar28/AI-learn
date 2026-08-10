@@ -46,7 +46,8 @@ Plotted across configurations, the pair traces a frontier. Recall tends not to d
 
 A harness produces numbers. These rules decide whether the numbers deserve trust.
 
-**1. Measure the shipped artifact.** If the harness imports the tool's internals as a library, it measures a program users never run: transport framing, serialization, configuration, and packaging are all skipped. For an [MCP server](../part3-mcp/index.md), that means the harness spawns the real binary and speaks to it over [stdio](../part3-mcp/transports.md), exactly as an IDE client would.
+!!! note "Rule 1 — Measure the shipped artifact"
+    If the harness imports the tool's internals as a library, it measures a program users never run: transport framing, serialization, configuration, and packaging are all skipped. For an [MCP server](../part3-mcp/index.md), that means the harness spawns the real binary and speaks to it over [stdio](../part3-mcp/transports.md), exactly as an IDE client would.
 
 ```mermaid
 flowchart LR
@@ -60,11 +61,14 @@ flowchart LR
     G -->|scores drop| F[Build fails]
 ```
 
-**2. Publish the unflattering numbers.** A benchmark page that contains only wins is indistinguishable from marketing. A harness that can produce bad news — and a team that publishes it — is what makes the good news credible.
+!!! note "Rule 2 — Publish the unflattering numbers"
+    A benchmark page that contains only wins is indistinguishable from marketing. A harness that can produce bad news — and a team that publishes it — is what makes the good news credible.
 
-**3. Gate regressions, and fail closed.** **Fail-closed** means that when a check fails or cannot run, the pipeline stops rather than proceeding with a warning. Applied to evals: if recall drops below the recorded baseline, the build fails. A gate that only warns is a gate everyone learns to walk around.
+!!! note "Rule 3 — Gate regressions, and fail closed"
+    **Fail-closed** means that when a check fails or cannot run, the pipeline stops rather than proceeding with a warning. Applied to evals: if recall drops below the recorded baseline, the build fails. A gate that only warns is a gate everyone learns to walk around.
 
-**4. State your non-claims.** An **honest non-claim** is an explicit statement that a plausible-sounding benefit was not measured and is therefore not claimed. It marks the boundary of what you know, which is precisely what makes the claims inside that boundary believable.
+!!! note "Rule 4 — State your non-claims"
+    An **honest non-claim** is an explicit statement that a plausible-sounding benefit was not measured and is therefore not claimed. It marks the boundary of what you know, which is precisely what makes the claims inside that boundary believable.
 
 ## In practice: Sankshep
 
