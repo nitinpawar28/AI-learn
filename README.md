@@ -11,9 +11,9 @@ AI-learn teaches modern AI engineering progressively, from "what is a token?" to
 | Part | What it covers |
 |------|----------------|
 | 0. Orientation | What the site is, the running example, and a one-page map of everything |
-| 1. LLM fundamentals | Tokens, next-token prediction, context windows, embeddings, prompting |
-| 2. Context engineering | Why raw context is wasteful; retrieval, structural minimization, persistent memory, and measuring quality |
-| 3. MCP | The problem MCP solves, its primitives, transports, the wire protocol, writing servers, and IDE integration |
+| 1. LLM fundamentals | Tokens, next-token prediction (attention, the KV cache, sampling knobs), context windows, embeddings and model selection, prompting |
+| 2. Context engineering | Why raw context is wasteful; retrieval (hybrid ranking, reranking), structural minimization, persistent memory, and measuring quality |
+| 3. MCP | The problem MCP solves, its primitives, transports, the stateless wire protocol (revision 2026-07-28), writing servers, and IDE integration |
 | 4. Agents | The agent loop, tool calling, subagents and orchestration, grounded prompting, cost, and safety |
 | 5. Capstone | Anatomy of a real MCP server: architecture plus seven engineering-judgment case studies |
 | 6. Reference | Glossary, further reading, and a build-your-own minimal MCP server walkthrough |

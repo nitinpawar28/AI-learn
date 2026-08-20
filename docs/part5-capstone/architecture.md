@@ -1,12 +1,22 @@
 # The whole picture
 
-Everything this site has taught — [tokens](../part1-fundamentals/tokens.md), the [context window](../part1-fundamentals/context-windows.md), [retrieval](../part2-context/rag-for-code.md), [minimization](../part2-context/structural-minimization.md), [memory](../part2-context/persistent-memory.md), [measurement](../part2-context/measuring-quality.md), the [MCP machinery](../part3-mcp/index.md), and the [agent loop](../part4-agents/agent-loop.md) driving it — meets in one running program here. By the end you will be able to describe Sankshep's architecture in thirty seconds, trace one request through every subsystem naming the chapter that taught each step, and defend what the server deliberately does not do. This page is the capstone's hub: every design decision gets its own [case study](index.md), and every trace step links back to the chapter that owns it.
+Everything this site has taught meets in one running program here. [Tokens](../part1-fundamentals/tokens.md). The [context window](../part1-fundamentals/context-windows.md). [Retrieval](../part2-context/rag-for-code.md) and [minimization](../part2-context/structural-minimization.md). [Memory](../part2-context/persistent-memory.md) and [measurement](../part2-context/measuring-quality.md). The [MCP machinery](../part3-mcp/index.md), and the [agent loop](../part4-agents/agent-loop.md) driving it.
+
+By the end you will be able to describe Sankshep's architecture in thirty seconds. You will be able to trace one request through every subsystem, naming the chapter that taught each step. And you will be able to defend what the server deliberately does not do.
+
+This page is the capstone's hub. Every design decision gets its own [case study](index.md), and every trace step links back to the chapter that owns it.
 
 ## The 30-second version
 
 If an interviewer gives you half a minute, this paragraph is the answer.
 
-As of 2026-07-18, Sankshep is a local-first .NET 9 MCP server at v1.8.0. It exposes 8 [tools](../part3-mcp/primitives.md), 1 prompt, and 1 resource — all three MCP primitives — over [stdio](../part3-mcp/transports.md) by default, with a stateless, loopback-bound Streamable HTTP mode behind `--http`. The code is four projects behind a [dependency fence](../part3-mcp/writing-a-server.md): a BCL-only core, with tree-sitter minimization, ONNX-plus-sqlite-vec retrieval, and SQLite memory around it, and the MCP SDK confined to the outermost project. It makes no model calls at request time — every output is deterministic — and its compression claims are benchmarked against the shipped binary: Balanced holds 0.94 key-point recall while removing 30.4% of the tokens (published in its `docs/benchmarks.md`, verified 2026-07-18).
+As of 2026-07-18, Sankshep is a local-first .NET 9 MCP server at v1.8.0.
+
+It exposes 8 [tools](../part3-mcp/primitives.md), 1 prompt, and 1 resource. That is all three MCP primitives. They run over [stdio](../part3-mcp/transports.md) by default, with a stateless, loopback-bound Streamable HTTP mode behind `--http`.
+
+The code is four projects behind a [dependency fence](../part3-mcp/writing-a-server.md). A BCL-only core sits at the bottom. Around it: tree-sitter minimization, ONNX-plus-sqlite-vec retrieval, and SQLite memory. The MCP SDK is confined to the outermost project.
+
+It makes no model calls at request time, so every output is deterministic. And its compression claims are benchmarked against the shipped binary. Balanced holds 0.94 key-point recall while removing 30.4% of the tokens, published in its `docs/benchmarks.md` and verified 2026-07-18.
 
 ## The shape of the solution
 
@@ -50,7 +60,11 @@ flowchart TB
     class SRV edge;
 ```
 
-Two structural facts carry most of the weight. First, the fence: `Sankshep.Core` holds the contracts and the composer engine with zero non-BCL references, and the CI test `DependencyRuleTests.CoreAssembly_HasZeroNonBclReferences` fails the build if that ever changes — the pattern taught in [Writing an MCP server](../part3-mcp/writing-a-server.md) and defended in the [dependency fence case study](case-dependency-fence.md). Second, the evals sit outside the process entirely: they launch the shipped binary and speak stdio JSON-RPC to it, so what the benchmarks measure is what an IDE client receives.
+Two structural facts carry most of the weight.
+
+First, the fence. `Sankshep.Core` holds the contracts and the composer engine with zero non-BCL references. The CI test `DependencyRuleTests.CoreAssembly_HasZeroNonBclReferences` fails the build if that ever changes. It is the pattern taught in [Writing an MCP server](../part3-mcp/writing-a-server.md), and defended in the [dependency fence case study](case-dependency-fence.md).
+
+Second, the evals sit outside the process entirely. They launch the shipped binary and speak stdio JSON-RPC to it. So what the benchmarks measure is what an IDE client receives.
 
 ## The surface, mapped to subsystems
 
@@ -64,11 +78,15 @@ The whole public surface fits in one table.
 | `compose_task_prompt` | prompt | the composer engine in Core — deterministic, no model calls (ADR-0013) | [Grounded prompting and composition](../part4-agents/grounded-prompting.md) |
 | `sankshep://stats` | resource | application-read statistics | [Tools, resources, and prompts](../part3-mcp/primitives.md) |
 
-The who-invokes rule from [Primitives](../part3-mcp/primitives.md) sorts this surface cleanly: models invoke the tools, the application reads the resource, a person picks the prompt — all three primitives, used as designed.
+The who-invokes rule from [Primitives](../part3-mcp/primitives.md) sorts this surface cleanly. Models invoke the tools. The application reads the resource. A person picks the prompt.
+
+All three primitives, used as designed.
 
 ## One request, end to end
 
-The centerpiece. An agent working in your IDE needs code context, and a `get_context` call with the query "how does login validate" and a 4,000-token budget travels the whole stack.
+This is the centerpiece.
+
+An agent working in your IDE needs code context. A `get_context` call travels the whole stack, carrying the query "how does login validate" and a 4,000-token budget.
 
 ```mermaid
 sequenceDiagram
@@ -77,11 +95,10 @@ sequenceDiagram
     participant S as Sankshep (subprocess)
     participant W as Working tree
     participant X as Vector index
-    Note over C,S: launch and handshake — once per session
+    Note over C,S: launch and discovery — once, then cached
     C->>S: spawn from the IDE's config entry
-    C->>S: initialize (protocolVersion, capabilities)
-    S-->>C: server capabilities — tools, prompts, resources
-    C--)S: notifications/initialized
+    C->>S: server/discover (_meta: protocol version, client capabilities)
+    S-->>C: supportedVersions, capabilities — tools, prompts, resources
     Note over C: the model emits a tool_use block; the client translates it to MCP
     C->>S: tools/call get_context — "how does login validate", budget 4,000
     S->>S: resolve paths against the repo root — no match fails loudly (isError)
@@ -100,7 +117,7 @@ Step by step, with the chapter that taught each move:
 
 1. **Configuration.** A few lines in the IDE's config file name the binary and its arguments — the four client formats are in [Connecting servers to IDEs](../part3-mcp/ide-integration.md).
 2. **Spawn.** The client launches the server as a subprocess; stdout will carry only JSON-RPC, and all logging goes to stderr — the stdio discipline from [Transports](../part3-mcp/transports.md).
-3. **Handshake.** `initialize`, capability exchange, `notifications/initialized` — spelled out line by line in [The wire protocol](../part3-mcp/wire-protocol.md).
+3. **Discovery.** Every request carries its protocol version and client capabilities in `_meta`; `server/discover` reports what the server offers, and the result is cacheable — spelled out line by line in [The wire protocol](../part3-mcp/wire-protocol.md). There is no session to open.
 4. **The call arrives.** The `tools/list` descriptions sit in the model's context; the model emits a `tool_use` block naming `get_context`, and the client translates it into a `tools/call` request — the two-protocol translation from [The wire protocol](../part3-mcp/wire-protocol.md); the description craft behind that selection is [Tool calling in depth](../part4-agents/tool-calling.md).
 5. **Path resolution.** Requested paths anchor to the repo root; a path matching nothing fails loudly as a tool error (`isError`, ADR-0016), so the miss reaches the model and can be corrected — the two failure channels from [The wire protocol](../part3-mcp/wire-protocol.md).
 6. **Verify-on-read.** A cheap mtime scan gates a precise content-hash diff; changed files are re-read, deleted files pruned. The working tree — not a snapshot — is the truth, so branch switches just work. The freshness problem is [Retrieval for code](../part2-context/rag-for-code.md)'s; the design is the [verify-on-read case study](case-verify-on-read.md).
@@ -110,7 +127,9 @@ Step by step, with the chapter that taught each move:
 10. **Report.** The savings report compares delivered files only — never everything-in-scope divided by budget, and no dollar figures (ADR-0017) — the accounting rules from [Measuring context quality](../part2-context/measuring-quality.md).
 11. **Return.** One JSON-RPC frame on stdout; the client appends the result to the conversation and the model continues — back into [the agent loop](../part4-agents/agent-loop.md), which the client owns.
 
-Notice what the trace never contains: a model call. Sankshep sits at the tool layer of the three-layer frame from [the running example](../part0-orientation/running-example.md), and every step above is deterministic.
+Notice what the trace never contains. A model call.
+
+Sankshep sits at the tool layer of the three-layer frame from [the running example](../part0-orientation/running-example.md). Every step above is deterministic.
 
 ## Data at rest
 
@@ -132,11 +151,19 @@ flowchart LR
     S -. "telemetry: no such edge (ADR-0011)" .-x NET
 ```
 
-Three stores, one conditional network edge. The facts table is the [right-sized memory design](../part2-context/persistent-memory.md) — plain SQL, never vectorized. The vector index is sqlite-vec's `vec0` with a pure-C# brute-force fallback — the [embedded-over-dedicated choice](case-sqlite-vec-vs-vector-db.md). The [embedding](../part1-fundamentals/embeddings.md) model is cached locally; the only network traffic the server initiates is its one-time download — SHA-256-verified against a manifest, atomically renamed, discarded on mismatch — and `SANKSHEP_MODEL_OFFLINE=1` removes even that edge. Telemetry is not disabled; it is structurally absent — the [local-first case study](case-local-first.md) treats that as a property you can verify, not a promise to trust.
+Three stores, one conditional network edge.
+
+The facts table is the [right-sized memory design](../part2-context/persistent-memory.md): plain SQL, never vectorized.
+
+The vector index is sqlite-vec's `vec0`, with a pure-C# brute-force fallback. That is the [embedded-over-dedicated choice](case-sqlite-vec-vs-vector-db.md).
+
+The [embedding](../part1-fundamentals/embeddings.md) model is cached locally. The only network traffic the server starts is its one-time download, which is SHA-256-verified against a manifest, atomically renamed, and discarded on mismatch. Setting `SANKSHEP_MODEL_OFFLINE=1` removes even that edge.
+
+Telemetry is not disabled. It is structurally absent. The [local-first case study](case-local-first.md) treats that as a property you can verify, rather than a promise to trust.
 
 ## Where the judgment lives
 
-Each load-bearing decision has an ADR and a dedicated case study using the capstone's [shared template](index.md): context, decision, alternatives, tradeoffs, what would change it, transferable lesson.
+Each load-bearing decision has an ADR, and a dedicated case study using the capstone's [shared template](index.md). Context, decision, alternatives, tradeoffs, what would change it, transferable lesson.
 
 | The call | ADR | Case study |
 | --- | --- | --- |
@@ -150,7 +177,9 @@ Each load-bearing decision has an ADR and a dedicated case study using the capst
 
 ## What it refuses to do
 
-An architecture is defined by its refusals as much as its features. Five are deliberate:
+An architecture is defined by its refusals as much as its features.
+
+Five of Sankshep's are deliberate.
 
 - **No model calls at request time.** `compose_task_prompt` returns "a prompt, not an answer" (ADR-0013), and a build-time test keeps every model-client library out of the composition path — the determinism argument from [Grounded prompting](../part4-agents/grounded-prompting.md).
 - **No routing.** Choosing which model serves a step belongs to the client, which owns the loop and pays the bill; a deterministic tool composes under any client's routing policy — the layering argument from [Cost and efficiency](../part4-agents/cost-efficiency.md).
@@ -158,7 +187,9 @@ An architecture is defined by its refusals as much as its features. Five are del
 - **No token pass-through.** The HTTP tier is an OAuth 2.1 resource server: it validates tokens, never issues them, never forwards them (ADR-0012) — the confused-deputy material in [Safety and judgment](../part4-agents/safety.md).
 - **No unmeasured claims.** "Roundtrips avoided" would be a flattering number, and it is explicitly not measured, so it is not claimed — the honest non-claim from [Measuring context quality](../part2-context/measuring-quality.md).
 
-Each refusal keeps a responsibility in the layer that can actually discharge it. That — more than any single subsystem — is the architecture.
+Each refusal keeps a responsibility in the layer that can actually discharge it.
+
+That, more than any single subsystem, is the architecture.
 
 ## Checkpoints
 
@@ -186,3 +217,13 @@ Each refusal keeps a responsibility in the layer that can actually discharge it.
 
     ??? success "Answer"
         One project. The SDK is referenced only by `Server`; everything beneath compiles without the protocol, and `DependencyRuleTests.CoreAssembly_HasZeroNonBclReferences` fails the build if the fence is breached. The evals never reference `Server` — they drive the binary over stdio — so they keep working as the migration's safety net. A major-version preview of the SDK already sits alongside the stable release (see [Writing an MCP server](../part3-mcp/writing-a-server.md)) — the fence exists for exactly that day.
+
+## Try it
+
+Practise the skill this part exists to build: describing a system's architecture out loud, at three different depths, without notes.
+
+1. **The 30-second version.** Close this page and say — aloud, or written in one paragraph — what Sankshep is, what problem it solves, and the one design commitment that shapes everything else. Compare against [the 30-second version](#the-30-second-version). If yours took two minutes, you described the implementation instead of the shape.
+2. **The request trace.** Now walk one `get_context` call from the client's spawn to the returned frame, naming each subsystem it touches in order. Check against the [sequence diagram](#one-request-end-to-end). Missing a step is normal; the useful signal is *which* step, because that is the subsystem you have not really understood yet.
+3. **The defence.** Pick any one step you just named and answer three questions about it: what alternative was available, what the chosen approach costs, and what would make you reverse it. If the third answer is "nothing", you are holding a belief rather than a decision — the case studies are where each one gets its flip condition.
+4. **Now do it for your own system.** Take a service you work on and produce the same three artefacts: a 30-second shape, one request traced end to end through named subsystems, and one decision defended with its alternative, its cost, and its reversal condition. This is the interview answer, and it is also the design-review answer.
+5. **Find your gap.** Whichever of the four steps was hardest tells you what to do next: step 1 means you lack a mental model, step 2 means you know components but not flow, step 3 means you inherited decisions without their rationale. [How to learn a codebase like this](learning-a-codebase.md) is organized around exactly those three failures.

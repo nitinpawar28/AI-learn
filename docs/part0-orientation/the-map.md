@@ -55,22 +55,22 @@ Every node on the map links to its chapter in the stage-by-stage list below.
 | 0 | [Running example](running-example.md) | Explain why the site teaches against a real server, not toy demos | Three-layer frame |
 | 0 | The map | Navigate the full curriculum; find any stage by topic or by time | Full curriculum flowchart |
 | 1 | [Tokens](../part1-fundamentals/tokens.md) | Estimate token cost for any text; predict why code costs more than prose | BPE merge loop; two tokenizers, one text |
-| 1 | [Prediction](../part1-fundamentals/what-llms-do.md) | Describe next-token prediction precisely; use temperature as an engineering control | Autoregressive loop; training vs. inference timeline |
+| 1 | [Prediction](../part1-fundamentals/what-llms-do.md) | Describe next-token prediction precisely; use temperature, top-p, and top-k as engineering controls; explain what attention and the KV cache cost you | Autoregressive loop; sampling pipeline; training vs. inference timeline |
 | 1 | [Context window](../part1-fundamentals/context-windows.md) | Explain why re-sending costs compound; place important context at the edges | Window composition; lost-in-the-middle curve |
-| 1 | [Embeddings](../part1-fundamentals/embeddings.md) | Trace a similarity search from index to result; diff the four silent failure modes | Quadrant chart; silent-failure decision tree |
+| 1 | [Embeddings](../part1-fundamentals/embeddings.md) | Trace a similarity search from index to result; diff the four silent failure modes; choose a model on the properties that decide it | Quadrant chart; silent-failure decision tree |
 | 1 | [Prompting](../part1-fundamentals/prompting-basics.md) | Build a five-part prompt; trace bad answers back to the missing part | Five-part flowchart with failure modes |
 | 2 | [The waste problem](../part2-context/why-raw-context-fails.md) | Compute signal-to-noise for any file; name the four curation moves | Token-cost comparison; pie chart; curation pipeline |
-| 2 | [Retrieval](../part2-context/rag-for-code.md) | Trace a full RAG pipeline; defend syntax-aware chunking and hybrid ranking | Six-stage pipeline; hybrid score merge |
+| 2 | [Retrieval](../part2-context/rag-for-code.md) | Trace a full RAG pipeline; defend syntax-aware chunking and hybrid ranking; say when reranking earns its latency | Six-stage pipeline; hybrid score merge; retrieval funnel |
 | 2 | [Minimization](../part2-context/structural-minimization.md) | Pick a transform for a question; state what it loses | Transform table; minimizer pipeline |
 | 2 | [Memory](../part2-context/persistent-memory.md) | Design a memory store on four axes; avoid the retrieval-mode mismatch | ER diagram; memory sequence |
 | 2 | [Measurement](../part2-context/measuring-quality.md) | Score a curated context with key-point recall; apply four honest-accounting rules | Eval harness flowchart; recall vs. compression |
 | 3 | [Why MCP](../part3-mcp/why-mcp.md) | Explain N×M → N+M; use host/client/server correctly; state what MCP is not | Before/after integration graph |
-| 3 | [Primitives](../part3-mcp/primitives.md) | Sort tools, resources, and prompts by who invokes each | Primitive invocation diagram |
-| 3 | [Transports](../part3-mcp/transports.md) | Choose stdio vs. Streamable HTTP; explain the stdout corruption danger | stdio diagram; HTTP sequenceDiagram; decision tree |
-| 3 | [Wire protocol](../part3-mcp/wire-protocol.md) | Trace a tool call from model emission to server execution at the JSON level | Handshake; tool invocation; error paths |
+| 3 | [Primitives](../part3-mcp/primitives.md) | Sort tools, resources, and prompts by who invokes each; handle the fourth case, where the server asks | Primitive invocation diagram |
+| 3 | [Transports](../part3-mcp/transports.md) | Choose stdio vs. Streamable HTTP; explain the stdout corruption danger and why sessions were removed | stdio diagram; HTTP sequenceDiagram; decision tree |
+| 3 | [Wire protocol](../part3-mcp/wire-protocol.md) | Trace a tool call from model emission to server execution at the JSON level; read a stateless request and a multi round-trip exchange | Discovery; tool invocation; error paths; MRTR |
 | 3 | [Server anatomy](../part3-mcp/writing-a-server.md) | Lay out the four layers; enforce a dependency fence with a test | Layer diagram; fence structure |
 | 3 | [IDE integration](../part3-mcp/ide-integration.md) | Connect a server to VS Code, Claude Code, Claude Desktop, and Cursor | — |
-| 4 | [Agent loop](../part4-agents/agent-loop.md) | Trace one iteration end to end; guard against the three failure modes | State machine; sequence diagram; parallel calls |
+| 4 | [Agent loop](../part4-agents/agent-loop.md) | Trace one iteration end to end; guard against the three failure modes; say what streaming does and does not change | State machine; sequence diagram; parallel calls |
 | 4 | [Tool calling](../part4-agents/tool-calling.md) | Write descriptions that select well; design results and errors that keep loops moving | Call lifecycle sequence |
 | 4 | [Subagents](../part4-agents/agents-subagents.md) | Explain context isolation; choose among fan-out, pipeline, and worker-pool | Orchestrator/subagent isolation diagram |
 | 4 | [Grounding](../part4-agents/grounded-prompting.md) | Assemble a grounded prompt from live project state; make it golden-testable | — |

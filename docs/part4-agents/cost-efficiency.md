@@ -1,23 +1,31 @@
 # Cost and efficiency
 
-Every chapter so far has counted [tokens](../part1-fundamentals/tokens.md); this one counts what happens when [the agent loop](agent-loop.md) multiplies them. By the end you will be able to:
+Every chapter so far has counted [tokens](../part1-fundamentals/tokens.md). This one counts what happens when [the agent loop](agent-loop.md) multiplies them.
+
+By the end you will be able to:
 
 - reconstruct an agent session's bill from the loop mechanics alone, without knowing a single price;
 - apply the two big levers — fewer tokens per call, a cheaper model per step — and name the software layer each lives in;
-- decide where a system should degrade gracefully and where it must refuse outright.
+- decide where a system should degrade gracefully, and where it must refuse outright.
 
-The prerequisite fact comes from [the context window](../part1-fundamentals/context-windows.md): model API calls are stateless, so the client re-sends the entire conversation on every call. Everything below is that one fact, priced.
+The prerequisite fact comes from [the context window](../part1-fundamentals/context-windows.md). Model API calls are stateless, so the client re-sends the entire conversation on every call.
+
+Everything below is that one fact, priced.
 
 ## How the bill accrues
 
-A single call bills two quantities: input tokens sent and output tokens produced. Output tokens are the pricier kind, but input dominates agent bills by volume — tool results and history dwarf anything a model writes back.
+A single call bills two quantities: input tokens sent, and output tokens produced.
+
+Output tokens are the pricier kind. But input dominates agent bills by volume, because tool results and history dwarf anything a model writes back.
 
 !!! warning "Evolving — verified 2026-07-18"
     Per-token prices change often and vary by provider and model, so this page states none. Two structural facts held across major providers as of 2026-07-18: output tokens cost more per token than input tokens, and cache-read input tokens cost less than fresh ones. This changes quickly; check the official pricing pages — [Anthropic](https://docs.anthropic.com/en/docs/about-claude/pricing), [OpenAI](https://platform.openai.com/docs/pricing), [Gemini](https://ai.google.dev/gemini-api/docs/pricing) — for current values.
 
-In a loop, iteration N re-sends everything from iterations 1 through N−1. Call this the **loop multiplier**: the factor by which a looping workflow re-bills tokens already paid for, because each iteration's input contains all of its predecessors.
+In a loop, round N re-sends everything from rounds 1 through N−1.
 
-A worked six-iteration session: base context (system prompt plus tool definitions) is 4,000 tokens; the task adds 300; each iteration the model emits ~300 tokens and the tool it named returns ~2,000.
+Call this the **loop multiplier**: the factor by which a looping workflow re-bills tokens already paid for, because each round's input contains all the rounds before it.
+
+Here is a worked six-round session. The base context — system prompt plus tool definitions — is 4,000 tokens. The task adds 300. Each round, the model emits about 300 tokens, and the tool it named returns about 2,000.
 
 | Iteration | New tokens since last call        | Input billed | Output billed |
 |-----------|-----------------------------------|-------------:|--------------:|
@@ -29,9 +37,15 @@ A worked six-iteration session: base context (system prompt plus tool definition
 | 6         | +2,300                            | 15,800       | 300           |
 | **Total** |                                   | **60,300**   | **1,800**     |
 
-The conversation never exceeds ~16,000 tokens, yet 60,300 input tokens are billed: a token is billed once per iteration it survives, so the earliest tokens are paid for six times.
+The conversation never exceeds about 16,000 tokens. Yet 60,300 input tokens are billed.
 
-Now attach the worked example from [Why raw context is wasteful](../part2-context/why-raw-context-fails.md): paste a real 37,000-token file into iteration 1 and every input grows by 37,000 — 282,300 billed input tokens in total. Deliver a curated 4,000-token slice instead and the same six iterations bill 84,300.
+A token is billed once per round it survives. So the earliest tokens are paid for six times.
+
+Now attach the worked example from [Why raw context is wasteful](../part2-context/why-raw-context-fails.md).
+
+Paste a real 37,000-token file into round 1, and every input grows by 37,000. That is 282,300 billed input tokens in total.
+
+Deliver a curated 4,000-token slice instead, and the same six rounds bill 84,300.
 
 ```mermaid
 xychart-beta
@@ -42,33 +56,68 @@ xychart-beta
     line [8.3, 18.9, 31.8, 47.0, 64.5, 84.3]
 ```
 
-The upper line is the whole-file paste; the lower is the curated slice. Same task, same loop — the only difference is what rode along in history. That widening gap motivates both levers.
+The upper line is the whole-file paste. The lower one is the curated slice.
+
+Same task, same loop. The only difference is what rode along in history. That widening gap motivates both levers.
+
+!!! failure "Common misconception"
+    *"Output tokens cost several times more than input tokens, so that is where the money goes."*
+
+    The per-token price is indeed higher on output. And in agent workloads the input side still dominates the bill, usually by a wide margin.
+
+    The reason is structural, not incidental. Each lap emits a modest number of output tokens once. Meanwhile the entire accumulated history is re-sent as *input* on every later lap.
+
+    A tool result generated in round 2 is billed again in rounds 3, 4, 5, and so on.
+
+    Optimizing the length of the model's replies attacks the smaller number. Shrinking what enters the history attacks the compounding one.
 
 ## Lever 1: send fewer tokens per call
 
-The cheapest token is the one you never send — and a token removed before iteration 1 is removed from every iteration. This lever is Part 2 in its entirety: [retrieve](../part2-context/rag-for-code.md) the relevant slice, [minimize](../part2-context/structural-minimization.md) it, [remember](../part2-context/persistent-memory.md) durable facts instead of re-deriving them, and [measure](../part2-context/measuring-quality.md) what the shrinking cost in fidelity.
+The cheapest token is the one you never send. And a token removed before round 1 is removed from every round.
 
-Its second half is **prompt caching**: a provider feature that recognizes when the opening span of a request is byte-identical to a recent request's opening span, and bills those re-read tokens at a discounted cache rate instead of the full input rate. A loop's system prompt, tool definitions, and history-so-far form exactly such a stable prefix — each iteration appends rather than edits.
+This lever is Part 2 in its entirety. [Retrieve](../part2-context/rag-for-code.md) the relevant slice. [Minimize](../part2-context/structural-minimization.md) it. [Remember](../part2-context/persistent-memory.md) durable facts instead of re-deriving them. And [measure](../part2-context/measuring-quality.md) what the shrinking cost you in fidelity.
 
-Two caveats keep caching a softener, not a cure:
+Its second half is **prompt caching**. That is a provider feature that spots when the opening span of a request is byte-identical to a recent request's opening span, and bills those re-read tokens at a discounted cache rate instead of the full input rate.
 
-- **The prefix must actually be stable.** A timestamp interpolated into the system prompt, tool definitions serialized in a different order, history edited in place — any of these makes every call a full-price cache miss. Byte-identical output is cache-friendly output, a point [grounded prompting](grounded-prompting.md) develops.
-- **Discounted is not free.** Cache reads still bill, output is never cached, and each iteration's fresh suffix always bills at the full rate. The multiplier is softened, not repealed — so caching and curation compose rather than substitute.
+The discount is not a courtesy. It reflects real work skipped, because a stable prefix lets the provider reuse the [KV cache](../part1-fundamentals/what-llms-do.md) it already computed for those tokens.
+
+A loop's system prompt, tool definitions, and history-so-far form exactly such a stable prefix. Each round appends rather than edits.
+
+Two caveats keep caching a softener rather than a cure.
+
+- **The prefix must actually be stable.** A timestamp interpolated into the system prompt. Tool definitions serialized in a different order. History edited in place. Any of these makes every call a full-price cache miss. The mechanism explains why the rule is so unforgiving: a token's cached key and value depend on every token before it, so one changed character invalidates the entire rest of the prefix, not just the part that moved. Byte-identical output is cache-friendly output, a point [grounded prompting](grounded-prompting.md) develops.
+- **Discounted is not free.** Cache reads still bill. Output is never cached. And each round's fresh suffix always bills at the full rate. The multiplier is softened, not repealed — so caching and curation compose rather than substitute for each other.
 
 ## Lever 2: route steps to cheaper models
 
-Not every iteration needs the flagship. Summarizing a tool result or formatting a commit message is work a small model handles; untangling a race condition may not be. **Model routing** is the practice — implemented in client code — of selecting which model serves each call: a cheap model for easy steps, escalating to an expensive one for hard steps.
+Not every round needs the flagship model.
 
-Where does routing live? Recall the three-layer frame from [the running example](../part0-orientation/running-example.md). The model cannot route: it is the thing being chosen, and it only maps tokens to probability distributions ([What an LLM actually does](../part1-fundamentals/what-llms-do.md)). A tool server cannot route: it answers one call at a time and never sees the loop, the conversation, or the invoice. That leaves the client — the layer that [owns the loop](agent-loop.md), assembles every request, holds the keys, and pays the bill. Routing is a client-layer concern because only the client has both the visibility to choose and the authority to act.
+Summarizing a tool result or formatting a commit message is work a small model handles. Untangling a race condition may not be.
 
-Typical signals: the kind of step (mechanical transform vs open-ended design), a cheap-model attempt failing validation (try cheap, escalate on failure), and explicit per-task hints. The risks are equally concrete:
+**Model routing** is the practice, implemented in client code, of choosing which model serves each call. A cheap model for easy steps, escalating to an expensive one for hard steps.
 
-- **Quality cliffs.** A cheaper model has weaker weights; whether it "understands" a given step (in the [operational sense](../part1-fundamentals/what-llms-do.md)) is an empirical question that fails silently when the answer is no.
-- **Per-route evals.** An eval that passes on the flagship certifies nothing about the cheap route; every route is a configuration to measure separately.
+Where does routing live? Recall the three-layer frame from [the running example](../part0-orientation/running-example.md).
+
+The model cannot route. It is the thing being chosen, and it only maps tokens to probability distributions. See [What an LLM actually does](../part1-fundamentals/what-llms-do.md).
+
+A tool server cannot route either. It answers one call at a time, and never sees the loop, the conversation, or the invoice.
+
+That leaves the client — the layer that [owns the loop](agent-loop.md), assembles every request, holds the keys, and pays the bill.
+
+Routing is a client-layer concern because only the client has both the visibility to choose and the authority to act.
+
+Typical signals for routing: the kind of step, meaning a mechanical transform versus open-ended design; a cheap-model attempt failing validation, so you try cheap and escalate on failure; and explicit per-task hints.
+
+The risks are equally concrete.
+
+- **Quality cliffs.** A cheaper model has weaker weights. Whether it "understands" a given step, in the [operational sense](../part1-fundamentals/what-llms-do.md), is an empirical question — and it fails silently when the answer is no.
+- **Per-route evals.** An eval that passes on the flagship certifies nothing about the cheap route. Every route is a configuration you have to measure separately.
 - **Route-dependent bugs.** "Works when the router picks the big model" is among the least reproducible bug reports an agent system can produce.
 
 !!! example "In the wild: Sankshep"
-    Sankshep is the deliberate counter-example: it refuses to route because it refuses to call models at all. As of 2026-07-18 (v1.8.0), it makes no LLM call at request time — `compose_task_prompt` returns "a prompt, not an answer" (ADR-0013), and a build-time test enforces that no model client can enter the composition path.
+    Sankshep is the deliberate counter-example. It refuses to route, because it refuses to call models at all.
+
+    As of 2026-07-18, at v1.8.0, it makes no LLM call at request time. `compose_task_prompt` returns "a prompt, not an answer" per ADR-0013, and a build-time test enforces that no model client can enter the composition path.
 
     ```mermaid
     flowchart LR
@@ -90,64 +139,110 @@ Typical signals: the kind of step (mechanical transform vs open-ended design), a
         snk -. "no request-time LLM calls —<br/>forbidden by a build-time test" .-x flagship
     ```
 
-    Staying deterministic at Layer 3 buys three things: byte-identical outputs (golden-testable, and cache-stable across reruns); zero marginal model cost (a tool call spends CPU, not tokens); and composability — with no hidden model calls of its own, the server behaves identically under *any* client's routing policy. Its efficiency contribution is therefore Lever 1 only: the Balanced profile holds 0.94 key-point recall at 30.4% compression, per Sankshep's published `docs/benchmarks.md` (verified 2026-07-18). The honesty coda: "roundtrips avoided" — better context saving whole iterations — is [explicitly not measured, so it is not claimed](../part2-context/measuring-quality.md).
+    Staying deterministic at Layer 3 buys three things.
+
+    Byte-identical outputs, which are golden-testable and cache-stable across reruns. Zero marginal model cost, since a tool call spends CPU rather than tokens. And composability: with no hidden model calls of its own, the server behaves identically under *any* client's routing policy.
+
+    Its efficiency contribution is therefore Lever 1 only. The Balanced profile holds 0.94 key-point recall at 30.4% compression, per Sankshep's published `docs/benchmarks.md`, verified 2026-07-18.
+
+    The honesty coda: "roundtrips avoided" — the idea that better context saves whole rounds — is [explicitly not measured, so it is not claimed](../part2-context/measuring-quality.md).
 
 ## Degradation economics
 
-Failure has a token bill too. When a dependency breaks a run mid-loop, every token billed so far bought nothing, and the retry re-bills all of it — the loop multiplier applied to failure. A tool's failure policy is therefore an economic decision, with two defensible modes:
+Failure has a token bill too.
 
-- **Fail soft on quality.** Where a missing dependency only degrades ranking or compression, keep answering: each rung of a [degradation ladder](../part2-context/rag-for-code.md) gives up quality, never correctness, and a plainer answer beats a crashed and re-billed loop.
+When a dependency breaks a run mid-loop, every token billed so far bought nothing. And the retry re-bills all of it. That is the loop multiplier applied to failure.
+
+So a tool's failure policy is an economic decision. There are two defensible modes.
+
+- **Fail soft on quality.** Where a missing dependency only degrades ranking or compression, keep answering. Each rung of a [degradation ladder](../part2-context/rag-for-code.md) gives up quality, never correctness — and a plainer answer beats a crashed and re-billed loop.
 - **[Fail closed](../part2-context/measuring-quality.md) on safety and honesty.** Where failure would compromise integrity — authentication, artifact verification, a regression gate — refuse outright. A degraded safety check is no safety check with better uptime.
 
 The rule in one line: degrade quality gracefully; never degrade safety or honesty.
 
 !!! example "In the wild: Sankshep"
-    The fail-soft ladder: a missing tree-sitter grammar means the file [passes through unminimized](../part2-context/structural-minimization.md); sqlite-vec unavailable means brute-force similarity in pure C#; an empty index means lexical search; a request that would deliver zero tokens raises a loud tool-level error (`isError`, ADR-0016) rather than a silently empty success. Every rung returns fewer or plainer tokens — never wrong ones. The fail-closed points are the other category: unauthenticated non-loopback HTTP is refused (see [Safety and judgment](safety.md)), an embedding-model download failing its SHA-256 check is discarded, and the eval-regression gate fails the build. Quality bends; integrity does not.
+    Here is the fail-soft ladder.
+
+    A missing tree-sitter grammar means the file [passes through unminimized](../part2-context/structural-minimization.md). sqlite-vec unavailable means brute-force similarity in pure C#. An empty index means lexical search. And a request that would deliver zero tokens raises a loud tool-level error — `isError`, per ADR-0016 — rather than a silently empty success.
+
+    Every rung returns fewer or plainer tokens. Never wrong ones.
+
+    The fail-closed points are the other category. Unauthenticated non-loopback HTTP is refused, as [Safety and judgment](safety.md) covers. An embedding-model download failing its SHA-256 check is discarded. And the eval-regression gate fails the build.
+
+    Quality bends. Integrity does not.
 
 ## The five-question bill checklist
 
 !!! tip "Diagnose your agent's bill"
-    Work through these in order — each exposes a different layer of token waste.
+    Work through these in order. Each one exposes a different layer of token waste.
 
-    1. **What rides in every call that was only needed once?** The multiplier bills history; the biggest wins are recurring blocks — Lever 1.
-    2. **Is the prefix cache-stable, and what silently breaks it?** Hunt for timestamps, nondeterministic serialization, edited history.
-    3. **Which iterations actually needed the expensive model — and how would you know?** If the answer is a guess, routing needs per-route evals before it needs a router.
+    1. **What rides in every call that was only needed once?** The multiplier bills history, so the biggest wins are recurring blocks. That is Lever 1.
+    2. **Is the prefix cache-stable, and what silently breaks it?** Hunt for timestamps, nondeterministic serialization, and edited history.
+    3. **Which rounds actually needed the expensive model, and how would you know?** If the answer is a guess, routing needs per-route evals before it needs a router.
     4. **When a dependency goes missing, does spend degrade or evaporate?** A mid-loop crash re-bills the whole run.
-    5. **Are efficiency claims measured on what ships, or inferred?** Compression is easy to claim; [measurement](../part2-context/measuring-quality.md) is the discipline.
+    5. **Are efficiency claims measured on what ships, or inferred?** Compression is easy to claim. [Measurement](../part2-context/measuring-quality.md) is the discipline.
 
 ## Checkpoints
 
-**1. In the worked table, the conversation never exceeds ~16,000 tokens, yet 60,300 input tokens are billed. Explain the mechanism.**
+**1. In the worked table, the conversation never exceeds about 16,000 tokens, yet 60,300 input tokens are billed. Explain the mechanism.**
 
 ??? success "Answer"
-    Calls are stateless, so each iteration re-sends the whole conversation so far; a token is billed once per iteration it survives. The earliest tokens are billed six times, making the total the sum of a growing series, not the size of the final window.
+    Calls are stateless, so each round re-sends the whole conversation so far. A token is billed once per round it survives.
+
+    The earliest tokens are billed six times. So the total is the sum of a growing series, not the size of the final window.
 
 **2. A teammate adds the current timestamp to the system prompt "for freshness". What does this do to the bill?**
 
 ??? success "Answer"
-    It breaks prompt caching on every call: the opening span is no longer byte-identical to the previous request's, so the entire prefix re-bills at the full input rate instead of the discounted cache rate. Volatile content belongs at the end of the context, or nowhere.
+    It breaks prompt caching on every call.
+
+    The opening span is no longer byte-identical to the previous request's, so the entire prefix re-bills at the full input rate instead of the discounted cache rate.
+
+    Volatile content belongs at the end of the context, or nowhere.
 
 **3. Why is model routing a client-layer concern?**
 
 ??? success "Answer"
-    The model cannot route — it is the object of the choice and only maps tokens to distributions. A tool server cannot route — it sees one isolated call, never the loop or the invoice. Only the client has both visibility (it assembles every request and owns the loop) and authority (it holds the keys and pays the bill).
+    The model cannot route. It is the object of the choice, and it only maps tokens to distributions.
 
-**4. An MCP tool calls an LLM internally to summarize its result before returning it. Name two costs versus a deterministic implementation.**
+    A tool server cannot route. It sees one isolated call, never the loop or the invoice.
+
+    Only the client has both visibility — it assembles every request and owns the loop — and authority, since it holds the keys and pays the bill.
+
+**4. An MCP tool calls an LLM internally to summarize its result before returning it. Name two costs, compared with a deterministic implementation.**
 
 ??? success "Answer"
-    Any two of: outputs are no longer byte-identical, so the tool cannot be golden-tested and destabilizes cache-friendly prefixes; every call carries a hidden marginal token bill and latency the client cannot see; and the tool escapes the client's routing policy — the client may route the loop to a cheap model while the tool quietly bills a flagship.
+    Any two of these.
 
-**5. Classify as fail-soft or fail-closed, and state the deciding rule: (a) a grammar is missing for one language; (b) a downloaded model fails its hash check; (c) eval recall drops below baseline; (d) the vector index does not exist yet.**
+    Outputs are no longer byte-identical, so the tool cannot be golden-tested, and it destabilizes cache-friendly prefixes.
+
+    Every call carries a hidden marginal token bill and latency the client cannot see.
+
+    And the tool escapes the client's routing policy. The client may route the loop to a cheap model while the tool quietly bills a flagship.
+
+**5. Classify each as fail-soft or fail-closed, and state the deciding rule. (a) A grammar is missing for one language. (b) A downloaded model fails its hash check. (c) Eval recall drops below baseline. (d) The vector index does not exist yet.**
 
 ??? success "Answer"
-    (a) and (d) fail soft: results get plainer or less well ranked but stay correct. (b) and (c) fail closed: a corrupt artifact and a shipped regression compromise integrity silently. The rule: degrade quality gracefully; never degrade safety or honesty.
+    (a) and (d) fail soft. Results get plainer or less well ranked, but stay correct.
+
+    (b) and (c) fail closed. A corrupt artifact and a shipped regression both compromise integrity silently.
+
+    The rule: degrade quality gracefully; never degrade safety or honesty.
 
 ## Try it
 
 Build the cumulative-token table for a real session of your own.
 
-1. Pick a recent agent session with at least five tool-calling iterations (most agentic IDEs and CLIs can show the transcript).
-2. Reconstruct the worked table: one row per iteration — *new tokens since last call*, *input billed*, *output billed*. Estimate counts with the tools from [Tokens and tokenization](../part1-fundamentals/tokens.md), or characters ÷ 4 as a rough floor.
-3. Sum the input column and divide by the final context size. That is your realized loop multiplier (the worked example's was ~3.7).
-4. Find the largest block appearing in more than one row — usually a pasted file or verbose tool result — and name the lever that shrinks it: curation before iteration 1, or caching of the stable prefix.
-5. If your client reports cache hits, check whether anything (timestamps, edited history) broke the prefix mid-session. You now hold the two numbers this chapter is about: what the loop multiplied, and what it multiplied needlessly.
+1. Pick a recent agent session with at least five tool-calling rounds. Most agentic IDEs and CLIs can show you the transcript.
+2. Reconstruct the worked table, one row per round: *new tokens since last call*, *input billed*, *output billed*.
+
+    Estimate counts with the tools from [Tokens and tokenization](../part1-fundamentals/tokens.md), or use characters divided by 4 as a rough floor.
+
+3. Sum the input column and divide by the final context size. That is your realized loop multiplier. The worked example's was about 3.7.
+4. Find the largest block appearing in more than one row. It is usually a pasted file or a verbose tool result.
+
+    Then name the lever that shrinks it: curation before round 1, or caching of the stable prefix.
+
+5. If your client reports cache hits, check whether anything broke the prefix mid-session — timestamps, edited history.
+
+You now hold the two numbers this chapter is about. What the loop multiplied, and what it multiplied needlessly.
