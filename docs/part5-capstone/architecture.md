@@ -99,7 +99,7 @@ sequenceDiagram
     C->>S: spawn from the IDE's config entry
     C->>S: server/discover (_meta: protocol version, client capabilities)
     S-->>C: supportedVersions, capabilities — tools, prompts, resources
-    Note over C: the model emits a tool_use block; the client translates it to MCP
+    Note over C: the model emits a tool_use block, and the client translates it to MCP
     C->>S: tools/call get_context — "how does login validate", budget 4,000
     S->>S: resolve paths against the repo root — no match fails loudly (isError)
     S->>W: verify-on-read — mtime scan, then content-hash diff

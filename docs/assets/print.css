@@ -1,0 +1,310 @@
+/* ============================================================================
+   A4 print stylesheet for the AI-learn book.
+   Used only by mkdocs-print.yml (the PDF build); the live site never loads it.
+
+   It solves four problems that break a naive print of this site:
+     1. 158 collapsed <details> blocks (13.2% of the book) print empty.
+     2. 22 tabbed code blocks show only the first language.
+     3. Chrome omits background colours unless told otherwise.
+     4. Diagrams, code blocks and tables split across page boundaries.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- page setup */
+
+@page {
+  size: A4 portrait;
+  margin: 20mm 20mm 18mm 20mm;
+}
+
+/* Running foot: page number, centred. */
+@page {
+  @bottom-center {
+    content: counter(page);
+    font-family: Roboto, system-ui, sans-serif;
+    font-size: 9pt;
+    color: #666;
+  }
+}
+
+/* ------------------------------------------------- print colours and base type */
+
+@media print {
+  /* Chrome drops background fills by default; admonitions and code blocks
+     depend on them entirely, so force them on. */
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html,
+  body,
+  .md-main,
+  .md-content {
+    background: #fff !important;
+  }
+
+  body {
+    font-size: 10.5pt;
+    line-height: 1.55;
+  }
+
+  .md-typeset {
+    font-size: 10.5pt;
+    line-height: 1.55;
+  }
+
+  /* --------------------------------------------------- strip the site chrome */
+
+  .md-header,
+  .md-tabs,
+  .md-sidebar,
+  .md-nav,
+  .md-footer,
+  .md-search,
+  .md-top,
+  .md-dialog,
+  .md-skip,
+  .md-content__button,          /* the "edit this page" pencil */
+  .md-source,
+  .md-banner {
+    display: none !important;
+  }
+
+  .md-main__inner,
+  .md-content__inner,
+  .md-grid {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+
+  /* ------------------------------------------------------- FIX 1: <details> */
+  /* 143 checkpoint answers, 10 "Going deeper" blocks and 4 troubleshooting
+     blocks live inside collapsed <details>. Force every one of them open, and
+     drop the disclosure triangle that would otherwise imply interactivity. */
+
+  details,
+  .md-typeset details {
+    display: block !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  details > summary,
+  .md-typeset details > summary {
+    list-style: none !important;
+  }
+
+  details > summary::marker,
+  details > summary::-webkit-details-marker {
+    display: none !important;
+    content: "" !important;
+  }
+
+  /* Material draws the twisty as a background image on summary::after. */
+  .md-typeset details > summary::after {
+    display: none !important;
+  }
+
+  /* Answers: tinted box, labelled, clearly attached to its question. */
+  .md-typeset details.success {
+    border: none !important;
+    border-left: 3pt solid #2e7d32 !important;
+    background: #f1f8f1 !important;
+    box-shadow: none !important;
+    margin: 0.5em 0 1.2em 0 !important;
+  }
+
+  .md-typeset details.success > summary {
+    background: #e4f0e4 !important;
+    color: #1b5e20 !important;
+    font-weight: 700;
+    padding-left: 0.8em !important;
+  }
+
+  /* "Going deeper" and troubleshooting blocks keep their own identity. */
+  .md-typeset details.info {
+    border-left: 3pt solid #1565c0 !important;
+    background: #f4f8fc !important;
+    box-shadow: none !important;
+  }
+
+  .md-typeset details.info > summary {
+    background: #e3f0fa !important;
+    color: #0d47a1 !important;
+  }
+
+  .md-typeset details.failure {
+    border-left: 3pt solid #c62828 !important;
+    background: #fdf5f5 !important;
+    box-shadow: none !important;
+  }
+
+  .md-typeset details.failure > summary {
+    background: #fbe6e6 !important;
+    color: #b71c1c !important;
+  }
+
+  /* ----------------------------------------------------------- FIX 2: tabs */
+  /* 22 tabbed blocks (Python / TypeScript, and the four IDE dialects) show one
+     panel on screen. In print, stack every panel and label it, so the
+     build-your-own chapter keeps both language tracks. */
+
+  .tabbed-set > input {
+    display: none !important;
+  }
+
+  .tabbed-set > .tabbed-labels {
+    display: none !important;
+  }
+
+  .tabbed-set > .tabbed-content {
+    display: block !important;
+  }
+
+  .tabbed-set .tabbed-block {
+    display: block !important;
+    margin-bottom: 0.8em;
+  }
+
+  /* Re-attach each panel's label as a printed heading. The label text is
+     carried through by the plugin's data attribute where available; the
+     numbered fallback keeps panels distinguishable regardless. */
+  .tabbed-set {
+    counter-reset: tabpanel;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    border-left: 2pt solid #ccc;
+    padding-left: 0.8em;
+    margin: 1em 0;
+  }
+
+  /* ------------------------------------------- FIX 4: keep blocks intact */
+
+  pre,
+  .md-typeset pre,
+  .highlight,
+  .md-typeset .highlight,
+  .md-typeset table,
+  .md-typeset .admonition,
+  .mermaid,
+  .md-typeset .mermaid,
+  figure {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* A very long listing cannot avoid breaking; let those split rather than
+     leaving half a page blank. */
+  .md-typeset pre {
+    max-height: none !important;
+  }
+
+  .md-typeset pre > code {
+    white-space: pre-wrap !important;
+    word-break: break-word;
+    font-size: 8.5pt !important;
+    line-height: 1.4 !important;
+  }
+
+  .md-typeset code {
+    font-size: 0.86em;
+    word-break: break-word;
+  }
+
+  /* Headings must not end a page. */
+  h1, h2, h3, h4, h5, h6,
+  .md-typeset h1,
+  .md-typeset h2,
+  .md-typeset h3,
+  .md-typeset h4 {
+    page-break-after: avoid;
+    break-after: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Widows and orphans. */
+  p, li, blockquote {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* --------------------------------------------------------- diagrams */
+
+  .mermaid,
+  .md-typeset .mermaid {
+    text-align: center;
+    margin: 1.2em auto !important;
+  }
+
+  .mermaid svg,
+  .md-typeset .mermaid svg {
+    max-width: 100% !important;
+    max-height: 210mm !important;   /* never taller than a page's text block */
+    height: auto !important;
+  }
+
+  /* ------------------------------------------------------- admonitions */
+
+  .md-typeset .admonition,
+  .md-typeset details {
+    font-size: 10pt;
+    box-shadow: none !important;
+  }
+
+  /* ------------------------------------------------------------ tables */
+
+  .md-typeset table:not([class]) {
+    font-size: 9pt;
+    display: table !important;
+    width: 100% !important;
+  }
+
+  .md-typeset table:not([class]) th,
+  .md-typeset table:not([class]) td {
+    padding: 0.35em 0.5em;
+  }
+
+  /* Material wraps tables in a horizontally scrolling container; in print that
+     clips content, so let it lay out naturally. */
+  .md-typeset__scrollwrap,
+  .md-typeset__table {
+    overflow: visible !important;
+    margin: 0 !important;
+  }
+
+  /* ------------------------------------------------------------- links */
+
+  /* Keep links readable as text, not as blue-on-grey web links. */
+  .md-typeset a,
+  .md-typeset a:visited {
+    color: #14489c !important;
+    text-decoration: none;
+  }
+
+  /* --------------------------------------------- chapter starts on a page */
+
+  /* The print plugin wraps each source page in .print-page. */
+  .print-page {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  .print-page:first-of-type {
+    page-break-before: avoid;
+    break-before: avoid;
+  }
+
+  /* Cover and table of contents get their own pages. */
+  #print-site-cover-page {
+    page-break-after: always;
+    break-after: page;
+  }
+
+  #print-page-toc {
+    page-break-after: always;
+    break-after: page;
+  }
+}

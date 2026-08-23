@@ -1,0 +1,7 @@
+# Extra dependency for the A4 PDF book build (scripts/build-pdf.py).
+# Not needed for the website build, which uses requirements.txt only.
+#
+#   pip install -r requirements.txt -r requirements-pdf.txt
+#   npm install --prefix scripts
+#   python scripts/build-pdf.py
+mkdocs-print-site-plugin==2.8

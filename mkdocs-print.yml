@@ -1,0 +1,40 @@
+# PDF/print build only. Inherits everything from mkdocs.yml and adds the
+# print-site plugin plus the A4 stylesheet.
+#
+# The live site is built from mkdocs.yml and is unaffected by this file:
+#   site  ->  mkdocs build --strict
+#   book  ->  scripts/build-pdf.py
+#
+# Usage:
+#   .venv/Scripts/python -m mkdocs build -f mkdocs-print.yml -d site-print
+
+INHERIT: ./mkdocs.yml
+
+# INHERIT deep-merges mappings but replaces lists, so `search` is redeclared
+# here alongside the print plugin.
+plugins:
+  - search
+  - print-site:
+      add_to_navigation: false
+      print_page_title: "AI-learn — the complete book"
+      add_print_site_banner: false
+
+      # Cover page and table of contents, generated into the print page.
+      add_cover_page: true
+      add_table_of_contents: true
+      toc_title: "Contents"
+      toc_depth: 3
+
+      # Number headings so the printed TOC and the running text agree.
+      enumerate_headings: true
+      enumerate_figures: true
+
+      # Print the target of every external link as a footnote-style URL, since
+      # a reader holding paper cannot click. Internal links stay as text.
+      add_full_urls: false
+
+      path_to_pdf: ""
+      include_css: true
+
+extra_css:
+  - assets/print.css

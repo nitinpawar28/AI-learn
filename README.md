@@ -27,6 +27,30 @@ python -m venv .venv
 .venv/Scripts/python -m mkdocs build --strict             # what CI runs
 ```
 
+## The PDF book
+
+The whole curriculum also builds into a single A4 PDF (~311 pages) for printing
+or offline reading.
+
+```bash
+pip install -r requirements.txt -r requirements-pdf.txt
+npm install --prefix scripts        # puppeteer-core + mermaid, ~40 MB
+python scripts/build-pdf.py -o AI-learn.pdf
+```
+
+The build uses the Chrome already installed on your machine (set `CHROME_PATH`
+to override) and takes a couple of minutes. It is driven by `mkdocs-print.yml`,
+which inherits `mkdocs.yml` and adds the print plugin plus `docs/assets/print.css`
+— the website build is unaffected.
+
+Three things the print pipeline has to fix, which a naive "print to PDF" gets wrong:
+
+| Problem | Fix |
+|---|---|
+| 158 collapsed `???` blocks — 13% of the book, including every checkpoint answer — print empty | expanded in the DOM before printing, and styled as tinted "Answer" boxes |
+| 22 tabbed blocks show only one language | every panel revealed and labelled, so both Python and TypeScript print |
+| 77 Mermaid diagrams never render headless (Material lazy-loads Mermaid from a CDN, and destroys the source when that import stalls) | Material's JS bundle is blocked and Mermaid is injected from `node_modules`, so rendering is deterministic and offline |
+
 ## Deployment
 
 Pushing to `main` triggers a GitHub Actions workflow that builds the site with `mkdocs build --strict` and deploys it via the native GitHub Pages artifact flow (Pages source: "GitHub Actions").
