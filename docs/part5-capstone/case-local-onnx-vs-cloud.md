@@ -108,7 +108,11 @@ The instrumentation already exists. The keypoint-recall harness from [Measuring 
 
 If judged misses started tracing back to retrieval — the right chunks never surfaced, rather than surfacing and being over-compressed — the embedding model would be the limiting factor, and the review reopens.
 
-As of 2026-07-18, the published results give the condition nothing to trigger on. Sankshep's public benchmarks page reports the Balanced profile holding 0.94 recall while removing 30.4% of tokens. So the pipeline's weakest link is not visibly the model.
+**As of 2026-09-20 the condition has started to trigger, which is the most useful thing a written flip condition can do.** The re-measured suite reports Balanced at 0.67 recall and 59.5% compression — and, more to the point, the misses now have a traceable shape. Of 19 facts missed at Balanced, 13 had no defining code delivered at all: the answer was never sent, rather than sent and over-compressed. Several questions score identically at Conservative and Balanced, which no amount of minimization explains, because Conservative keeps every body.
+
+That is the retrieval bottleneck the ADR names. It is not yet a decision to swap the model — the same evidence also points at ranking and at chunk budgets, which are cheaper to change and were changed first — but it is exactly the signal the condition was written to catch, and the review is open rather than closed.
+
+Note what made the signal legible: the harness reports *which* chunks it withheld to fit a budget. A recall number alone would have said quality was mediocre; the withheld count says where to look.
 
 Anyone who does pull the trigger inherits a known checklist, straight from the [four silent footguns](../part1-fundamentals/embeddings.md#four-details-that-break-pipelines-silently).
 

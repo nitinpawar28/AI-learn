@@ -110,38 +110,57 @@ flowchart LR
 
 ## In practice: Sankshep
 
-As of 2026-07-18, Sankshep v1.8.0's published benchmark suite is a direct instance of this chapter. It is called `keypoint-recall-v1` and described in its public `docs/benchmarks.md`.
+As of 2026-09-20, Sankshep v2.0.0's published benchmark suite is a direct instance of this chapter. It is called `keypoint-recall-v1` and described in its [public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/).
 
-The suite has 8 questions broken into 50 atomic facts, over a real, private C# trading platform, with files ranging from roughly 750 to 37,000 tokens. Claude Opus serves as judge, with a verbosity guard built into the rubric.
+The suite has 8 questions broken into 52 atomic facts, over a real, private C# trading platform, with files ranging from roughly 750 to 37,000 tokens. `claude-opus-4-8` serves as judge, with a verbosity guard built into the rubric. Each fact was written from a read of the source and then put to an adversarial re-read that refused 12 of 64 candidates — a detail worth copying, because the facts a benchmark *rejects* decide what it can measure.
 
 Per ADR-0008, the harness drives the real server binary as a subprocess over stdio. The wire protocol is also the test interface.
 
-The flagship numbers, verified 2026-07-18, by [minimization level](structural-minimization.md):
+The flagship numbers, verified 2026-09-20, by [minimization level](structural-minimization.md):
 
 | Level | Key-point recall | Compression |
 | --- | --- | --- |
-| Conservative | 0.94 | 19.1% |
-| Balanced | 0.94 | 30.4% |
-| Aggressive | 0.11 | 87.9% |
+| Conservative | 0.50 | 38.5% |
+| Balanced | 0.67 | 59.5% |
+| Aggressive | 0.10 | 77.5% |
 
 ```mermaid
 xychart-beta
-    title "Recall (line) vs compression (bars), verified 2026-07-18"
+    title "Recall (line) vs compression (bars), verified 2026-09-20"
     x-axis ["Conservative", "Balanced", "Aggressive"]
     y-axis "Fraction (0 to 1)" 0 --> 1
-    bar [0.191, 0.304, 0.879]
-    line [0.94, 0.94, 0.11]
+    bar [0.385, 0.595, 0.775]
+    line [0.50, 0.67, 0.10]
 ```
 
-The headline is Balanced. It holds Conservative's 0.94 recall while compressing about 11 points more.
+The headline is Balanced, and it is the opposite of what most people expect: it recovers **more** facts than Conservative — 0.67 against 0.50 — while compressing 1.5 times as much. Minimizing harder bought quality rather than costing it, because a fixed budget spent on smaller files reaches more of the code that answers the question.
 
-Aggressive's 0.11 is lossy by design, and published anyway. That is rule 2 in action.
+Aggressive's 0.10 is lossy by design, and published anyway. That is rule 2 in action.
 
-On the largest file in the suite, around 37,000 tokens, recall was 1.00 at 35 to 37% compression. The file that needed compression most lost nothing.
+### How much the judge itself moves
+
+This is the question a skeptic asks first, and most published benchmarks cannot answer it. Sankshep ran the same set **five times against the same code**:
+
+| | Balanced key-point recall |
+| --- | --- |
+| Five runs, unchanged code | 0.703, 0.649, 0.682, 0.661, 0.667 |
+
+A spread of 0.054, from nothing but the judge changing its mind. **Every compression figure was identical across all five runs** — because compression is arithmetic on token counts and no judge is involved.
+
+That contrast is the lesson. It separates *the instrument is noisy* from *the quantity is noisy*, and it tells you which of your own numbers you are allowed to compare. On this suite, a recall difference under about 0.05 is not evidence of anything — including a difference you compute between two rows of the table above.
+
+The practical consequence: Sankshep's regression gate floors Balanced recall at **0.60**, below the measurement rather than at it. A gate set at the measured value trips on the judge having a different opinion, and a gate that cries wolf is one everyone learns to ignore.
 
 Two more honest-accounting details.
 
-First, a published trade-off. In a composed-versus-naive eval, naive context scored 0.96 recall against 0.63 for the composed prompt, at a 32.6% token reduction. An unflattering pair, printed rather than hidden.
+First, a published trade-off. In a composed-versus-naive eval, naive context — every raw file, uncapped — scored 1.00 recall against 0.66 for the composed prompt, at a 72.6% token reduction. An unflattering pair, printed rather than hidden.
+
+!!! failure "Common misconception: the harness reported it, so it measured it"
+    That 72.6% used to read 32.6%, and the smaller number was wrong for a reason worth knowing. The token counts came from a counter that **accumulates for the life of the target repository** — so the harness was reporting every measurement ever taken against that repo, not the run that printed it.
+
+    Nobody noticed by reading the percentage. It was caught by a **deterministic quantity that moved**: the naive baseline is a plain read of the same whole files, so it cannot change between runs — and it climbed 155,618, then 536,806 tokens across four runs over files nobody had touched.
+
+    That is a general detection method for any evaluation harness. Find a number in your report that *cannot* move unless the inputs move, and watch it. When it moves, your instrument is wrong, not your system.
 
 Second, per ADR-0017, savings reports compare against delivered files only. Never against everything-in-scope divided by budget. Dollar figures were deleted from reports entirely, on the grounds that "a ratio whose numerator and denominator come from different universes is not a measurement."
 
@@ -179,7 +198,7 @@ And the honest non-claim. "Roundtrips avoided" — the idea that better context 
 
         Spawning the shipped binary over its real transport measures the artifact users actually get.
 
-5. A tool's published benchmarks include a mode that scores 0.11 recall. Why can that number *increase* your trust in the mode that scores 0.94?
+5. A tool's published benchmarks include a mode that scores 0.10 recall. Why can that number *increase* your trust in the mode that scores 0.67?
 
     ??? success "Answer"
         It proves the harness can produce bad news, and that the authors publish it.

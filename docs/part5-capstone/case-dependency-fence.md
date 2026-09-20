@@ -10,7 +10,7 @@ By the end you will be able to defend a [dependency fence](../part3-mcp/writing-
 
 ## The context
 
-Sankshep v1.8.0 is a .NET 9 MCP server with a small protocol surface — eight [tools, one prompt, and one resource](../part3-mcp/primitives.md) — and a large domain underneath it.
+Sankshep v2.0.0 is a .NET 10 MCP server with a small protocol surface — eight [tools, one prompt, and one resource](../part3-mcp/primitives.md) — and a large domain underneath it.
 
 That domain holds [structural minimization](../part2-context/structural-minimization.md), [retrieval](../part2-context/rag-for-code.md), [persistent memory](../part2-context/persistent-memory.md), a deterministic [composer engine](../part4-agents/grounded-prompting.md), and an [eval harness](../part2-context/measuring-quality.md).
 

@@ -117,7 +117,7 @@ The risks are equally concrete.
 !!! example "In the wild: Sankshep"
     Sankshep is the deliberate counter-example. It refuses to route, because it refuses to call models at all.
 
-    As of 2026-07-18, at v1.8.0, it makes no LLM call at request time. `compose_task_prompt` returns "a prompt, not an answer" per ADR-0013, and a build-time test enforces that no model client can enter the composition path.
+    As of 2026-09-20, at v2.0.0, it makes no LLM call at request time. `compose_task_prompt` returns "a prompt, not an answer" per ADR-0013, and a build-time test enforces that no model client can enter the composition path.
 
     ```mermaid
     flowchart LR
@@ -143,7 +143,7 @@ The risks are equally concrete.
 
     Byte-identical outputs, which are golden-testable and cache-stable across reruns. Zero marginal model cost, since a tool call spends CPU rather than tokens. And composability: with no hidden model calls of its own, the server behaves identically under *any* client's routing policy.
 
-    Its efficiency contribution is therefore Lever 1 only. The Balanced profile holds 0.94 key-point recall at 30.4% compression, per Sankshep's published `docs/benchmarks.md`, verified 2026-07-18.
+    Its efficiency contribution is therefore Lever 1 only. The Balanced profile reaches 0.67 key-point recall at 59.5% compression, per Sankshep's published benchmarks, verified 2026-07-18.
 
     The honesty coda: "roundtrips avoided" — the idea that better context saves whole rounds — is [explicitly not measured, so it is not claimed](../part2-context/measuring-quality.md).
 
