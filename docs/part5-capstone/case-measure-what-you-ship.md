@@ -143,3 +143,25 @@ Three conditions would reopen these decisions, each on its own axis.
         A benchmark that only ever produces wins is indistinguishable from marketing. One that visibly produces bad news — a lossy-by-design mode scored honestly, a real tradeoff printed as a pair — shows that the harness can fail, and that the authors publish it when it does.
 
         The flattering numbers came from that same instrument. Which is exactly what makes them worth believing.
+
+## Try it
+
+Take the three questions to a real number, and expect it to fail at least one.
+
+Pick a benchmark you currently rely on - a vendor's headline figure, a README badge, or one of your own. Then fill this in:
+
+| Question | What to look for | Your answer |
+|---|---|---|
+| **What is the denominator?** | A percentage is a fraction. Find what it divides by, and whether that baseline is something you would otherwise have paid for | |
+| **How much does the instrument move?** | Was it run more than once on unchanged inputs? If not, no difference it reports is known to be real | |
+| **Does it measure the shipped artifact?** | Or a library that shares code with it, with the serialization, transport and defaults excluded | |
+
+1. Answer all three. Stop at the first one you cannot answer from public material - that is already the finding.
+
+2. For the second question, do the work yourself if you can: run the same benchmark three times against the *same* inputs and write down the spread. Anything smaller than that spread is not a result.
+
+3. Separate the numbers that are arithmetic from the numbers that are judgement. Token counts, byte counts and timings are arithmetic and should repeat exactly. Anything scored by a model or a human will not.
+
+Step 3 is the one that generalizes. When a report mixes both kinds and quotes them to the same precision, it is hiding which half you can trust - and the giveaway is that the arithmetic half repeats to the digit while the judged half wanders.
+
+If you publish numbers, do this to your own first. It is much cheaper than having a reader do it for you.

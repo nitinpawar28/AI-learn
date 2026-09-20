@@ -6,7 +6,7 @@ By the end of this chapter you will be able to:
 
 - describe, step by step, what happens between sending a prompt and getting a reply;
 - explain why long context costs what it costs, and what the KV cache changes;
-- use temperature, top-p, and top-k as real controls rather than mystery knobs;
+- explain what temperature, top-p and top-k do to the draw — and why frontier providers are taking them away;
 - turn sentences like "the model understood the question" into precise, testable claims.
 
 This chapter builds on [tokens and tokenization](tokens.md). Everything below works on tokens, never on raw text.
@@ -99,6 +99,17 @@ That second point is the mechanism behind the [lost-in-the-middle effect](contex
 
 ## Sampling: choosing one token
 
+!!! warning "Evolving — verified 2026-09-20"
+    **The mechanism in this section is permanent. The knobs are not, and on Anthropic's API most of them have already closed.**
+
+    The Messages API reference now marks `temperature` **Deprecated**: *"Models released after Claude Opus 4.6 do not support setting temperature. A value of 1.0 will be accepted for backwards compatibility, all other values will be rejected with a 400 error."* And `top_p` and `top_k` no longer appear among the documented request-body parameters at all.
+
+    So on a current frontier Claude model you cannot turn any of these dials. Sending `temperature: 0.2` is not ignored — it is a 400.
+
+    **Read the rest of this section anyway, and read it as mechanism rather than as a control panel.** Every model still turns logits into a distribution and draws from it; that is why output varies at all, why "temperature 0" was never a guarantee, and why a long answer can contain one absurd word. Understanding the draw is how you reason about all of it. What changed is *who holds the dial* — increasingly the provider, who tunes it per model, rather than you.
+
+    Other providers still expose all three, and open-weight models expose them completely, so the knobs remain worth knowing. Check your provider's current reference before relying on any of them, including this page.
+
 The forward pass gives you probabilities. Something still has to pick one token.
 
 **Sampling** is that step. It draws the next token at random, in proportion to its probability. Think of a weighted dice roll, not a lookup of "the answer".
@@ -133,7 +144,7 @@ Two more controls exist for that. They work by *cutting* candidates before the d
 - **Top-k** keeps only the `k` most probable tokens and throws away the rest. It is simple, and blunt. `k = 40` is far too generous when the model is confident, and far too strict when it is genuinely unsure.
 - **Top-p**, also called nucleus sampling, sorts tokens by probability and keeps just enough to reach a running total of `p` — say 0.9. So the number of survivors *adapts*. Where the model is confident, the top one or two tokens already reach 0.9 and everything else is cut. Where it is unsure, the pool stays wide.
 
-That adaptiveness is why top-p is the better default, and why most APIs put it front and center.
+That adaptiveness is why top-p is the better default wherever you still get the choice. It is also why, where a provider has taken the knobs away, top-p is the one it most likely tuned on your behalf.
 
 ```mermaid
 flowchart LR
@@ -304,7 +315,7 @@ This two-source rule drives everything that follows. Choosing which tokens deser
 
 ## Try it
 
-Measure temperature's effect directly. Any chat playground or API with a temperature control works.
+Measure temperature's effect directly. You need a playground or API that still **exposes** a temperature control — per the box above, current frontier Claude models reject anything but `1.0`, so reach for an open-weight model or another provider. That constraint is itself the lesson: the mechanism is everywhere, the dial is not.
 
 1. Pick a prompt with many acceptable answers:
 

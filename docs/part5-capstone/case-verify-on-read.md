@@ -145,3 +145,27 @@ What it buys:
         A watcher-primary design must correctly ingest a burst of thousands of events without dropping any. A timer-based design serves results from the old branch until the next tick.
 
         Verify-on-read gets the hard case free, because the hard case is indistinguishable from the normal one.
+
+## Try it
+
+Find out whether your own cache can serve you something that is no longer true.
+
+1. Pick anything in your stack that keeps a derived copy: a search index, a materialized view, a memoized layer, a build cache.
+
+2. Change the source behind its back. Edit the file directly, update the row out of band, touch the input without going through the write path the cache knows about.
+
+3. Query it. Write down what you get, and how long the wrong answer survives.
+
+4. Classify what you found:
+
+    | What happened | What it means |
+    |---|---|
+    | Correct immediately | Something verifies on read. Find it and understand what it costs |
+    | Wrong, then correct after a delay | You have eventual consistency. Decide whether a reader can tell |
+    | Wrong until restarted or manually rebuilt | The freshness strategy is "hope", and the bug is invisible |
+
+5. Then price the cheap check. Time a metadata-only scan - `stat` on every indexed file, touching no contents - across your corpus. On a few thousand files it is usually single-digit milliseconds.
+
+If step 5 is cheap and step 3 was wrong, you have a correctness bug wearing a performance excuse.
+
+The general shape transfers to anything index-like. Make the cheap synchronous check the thing you rely on for correctness, and demote the clever asynchronous machinery - watchers, invalidation hooks, pub/sub - to a latency optimization you could delete without becoming wrong. Anything you cannot delete without becoming wrong is load-bearing, and needs to be as simple as the thing it replaced.

@@ -179,3 +179,35 @@ Declare a different scope, and the same reasoning flips the same decision.
         Sankshep has not built for it because ADR-0019 deliberately declares the opposite scope: a focused local, stdio-first core, with any enterprise tier optional and off by default.
 
         The decision is scoped, not universal. Change the declared scope and the same sizing argument produces the opposite answer.
+
+## Try it
+
+Run the sizing argument on your own corpus before anyone sells you a cluster.
+
+1. Count your chunks. Files times average chunks per file is close enough.
+
+2. Compute the raw vector footprint:
+
+    ```text
+    chunks x dimensions x 4 bytes = bytes of float32
+    ```
+
+    100,000 chunks at 384 dimensions is about 154 MB. At 1,536 dimensions it is about 614 MB.
+
+3. Compare that with the RAM on the machine you already have. If the whole index fits in memory with room to spare, exhaustive search is not a compromise - it is simply the correct algorithm at that size, and it returns exact results that an approximate index only estimates.
+
+4. Measure rather than assume. Build a brute-force scan over random vectors at your N and time one query:
+
+    ```python
+    import numpy as np, time
+    v = np.random.rand(100_000, 384).astype(np.float32)
+    v /= np.linalg.norm(v, axis=1, keepdims=True)
+    q = v[0]
+    t = time.perf_counter(); (v @ q).argpartition(-10)[-10:]; print(time.perf_counter() - t)
+    ```
+
+5. Raise N by 10x until that timing stops being acceptable to you. **That** is where a dedicated vector database starts earning its operational cost.
+
+Most single-repository corpora land far below the crossing point, which is why the interesting answer is usually a file rather than a service. The general rule survives the specific technology: size infrastructure to the corpus you have, not the corpus in the vendor's benchmark.
+
+And give the dependency an absence story. Ask what your system does when the fancy index is unavailable. If the answer is "it stops", you have taken on an availability risk you may not have priced.
