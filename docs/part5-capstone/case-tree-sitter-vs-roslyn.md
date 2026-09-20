@@ -35,7 +35,7 @@ As [Structural minimization](../part2-context/structural-minimization.md) showed
 
 ADR-0003: parse everything with tree-sitter.
 
-One framework, twelve grammars. As of v2.0.0, Sankshep parses C#, JavaScript, TypeScript, TSX, Python, Go, Java, C, C++, Rust, PHP, and Ruby. Each has a `.scm` query file telling the transforms what to look for.
+One framework, twelve grammars. As of v3.0.0, Sankshep parses C#, JavaScript, TypeScript, TSX, Python, Go, Java, C, C++, Rust, PHP, and Ruby. Each has a `.scm` query file telling the transforms what to look for.
 
 The operational details carry most of the reliability story.
 

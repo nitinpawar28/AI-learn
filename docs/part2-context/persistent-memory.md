@@ -111,7 +111,7 @@ This is a general persistence bug, but memory is unusually exposed to it. Proven
 
 ## In practice: Sankshep
 
-[Sankshep](../part0-orientation/running-example.md) — as of 2026-09-20, at v2.0.0 — exposes memory through three of its tools: `remember`, `recall`, and `export_decisions`. Tools are covered in [Part 3](../part3-mcp/primitives.md).
+[Sankshep](../part0-orientation/running-example.md) — as of 2026-09-20, at v3.0.0 — exposes memory through three of its tools: `remember`, `recall`, and `export_decisions`. Tools are covered in [Part 3](../part3-mcp/primitives.md).
 
 Its design maps onto this chapter's axes almost line by line.
 

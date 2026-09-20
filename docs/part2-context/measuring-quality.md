@@ -110,7 +110,7 @@ flowchart LR
 
 ## In practice: Sankshep
 
-As of 2026-09-20, Sankshep v2.0.0's published benchmark suite is a direct instance of this chapter. It is called `keypoint-recall-v1` and described in its [public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/).
+As of 2026-09-20, Sankshep v3.0.0's published benchmark suite is a direct instance of this chapter. It is called `keypoint-recall-v1` and described in its [public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/).
 
 The suite has 8 questions broken into 52 atomic facts, over a real, private C# trading platform, with files ranging from roughly 750 to 37,000 tokens. `claude-opus-4-8` serves as judge, with a verbosity guard built into the rubric. Each fact was written from a read of the source and then put to an adversarial re-read that refused 12 of 64 candidates — a detail worth copying, because the facts a benchmark *rejects* decide what it can measure.
 

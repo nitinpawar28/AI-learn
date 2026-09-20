@@ -104,14 +104,14 @@ Sankshep ships this whole chapter as its single MCP prompt, `compose_task_prompt
 
 The request carries a task and a token budget, defaulting to 4,000.
 
-The composer then splits that budget, reserving 2,800 for code. It runs [retrieval](../part2-context/rag-for-code.md) and the [minimizer](../part2-context/structural-minimization.md) at the Balanced level, using the task text as the collapse query. It pulls conventions from [memory](../part2-context/persistent-memory.md) wholesale by category, scoped to the current branch plus global entries, deduplicated.
+That budget bounds the **code**. Remembered conventions are additive, on a separate budget of 600 tokens, so the prompt you get back is deliberately larger than the number you asked for. It runs [retrieval](../part2-context/rag-for-code.md) and the [minimizer](../part2-context/structural-minimization.md) at the Balanced level, using the task text as the collapse query. It pulls conventions from [memory](../part2-context/persistent-memory.md) wholesale by category, scoped to the current branch plus global entries, deduplicated.
 
 Finally it renders four sections in a fixed order: `# Task`, `# Relevant code (minimized)`, `# Project conventions`, `# Constraints`.
 
 ```mermaid
 flowchart TB
     IN["Request: task text +<br/>token budget (default 4,000)"]
-    SPLIT["Budget split: 2,800 of 4,000<br/>reserved for the code section"]
+    SPLIT["Budget bounds the code (4,000)<br/>conventions additive (600)"]
     CODE["Retrieval + minimizer at Balanced,<br/>task text as the collapse query"]
     CONV["Memory: conventions fetched by category,<br/>current branch + global, deduplicated"]
     RENDER["Deterministic four-section render:<br/>Task / Relevant code (minimized) /<br/>Project conventions / Constraints"]

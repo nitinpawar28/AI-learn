@@ -10,7 +10,7 @@ This page is the capstone's hub. Every design decision gets its own [case study]
 
 If an interviewer gives you half a minute, this paragraph is the answer.
 
-As of 2026-09-20, Sankshep is a local-first .NET 10 MCP server at v2.0.0.
+As of 2026-09-20, Sankshep is a local-first .NET 10 MCP server at v3.0.0.
 
 It exposes 8 [tools](../part3-mcp/primitives.md), 1 prompt, and 1 resource. That is all three MCP primitives. They run over [stdio](../part3-mcp/transports.md) by default, with a stateless, loopback-bound Streamable HTTP mode behind `--http`.
 
@@ -28,7 +28,7 @@ flowchart TB
         STDIO["stdio — default<br/>stderr-only logging"]
         HTTP["Streamable HTTP — --http<br/>stateless · loopback-bound · fail-closed"]
     end
-    subgraph BIN["One .NET 10 binary — Sankshep v2.0.0"]
+    subgraph BIN["One .NET 10 binary — Sankshep v3.0.0"]
         SRV["Server — composition root<br/>the only project referencing the MCP SDK<br/>8 tools · 1 prompt · 1 resource"]
         MIN["Minimizer<br/>tree-sitter parsing, token counting"]
         MEM["Memory<br/>SQLite, sqlite-vec, ONNX Runtime"]
@@ -196,7 +196,7 @@ That, more than any single subsystem, is the architecture.
 1. **"You have thirty seconds — describe the system."** Give the paragraph.
 
     ??? success "Answer"
-        A local-first .NET 10 MCP server (v2.0.0 as of 2026-09-20): 8 tools, 1 prompt, 1 resource over stdio by default, plus a stateless loopback HTTP mode. Four projects behind a dependency fence — BCL-only core; tree-sitter minimization; ONNX + sqlite-vec retrieval; SQLite memory — with the MCP SDK confined to the outermost project. No model calls at request time, so outputs are deterministic; compression benchmarked against the shipped binary: 0.94 recall with 30.4% of tokens removed at Balanced.
+        A local-first .NET 10 MCP server (v3.0.0 as of 2026-09-20): 8 tools, 1 prompt, 1 resource over stdio by default, plus a stateless loopback HTTP mode. Four projects behind a dependency fence — BCL-only core; tree-sitter minimization; ONNX + sqlite-vec retrieval; SQLite memory — with the MCP SDK confined to the outermost project. No model calls at request time, so outputs are deterministic; compression benchmarked against the shipped binary: 0.94 recall with 30.4% of tokens removed at Balanced.
 
 2. **"Walk me through what happens between the model emitting a `tool_use` block for `get_context` and the first byte of the result reaching it."**
 

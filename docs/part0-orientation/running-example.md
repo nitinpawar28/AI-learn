@@ -19,7 +19,7 @@ There is a second benefit. If you ever have to explain a system you built, in a 
 !!! example "In the wild: Sankshep"
     The running example is **Sankshep**. Five sentences describe it.
 
-    1. As of 2026-09-20, Sankshep is at version 2.0.0: a server for the Model Context Protocol (MCP), written in C# on .NET 10. An MCP server is a program that offers tools to AI coding assistants over a standard protocol, and [Part 3](../part3-mcp/why-mcp.md) explains that protocol properly.
+    1. As of 2026-09-20, Sankshep is at version 3.0.0: a server for the Model Context Protocol (MCP), written in C# on .NET 10. An MCP server is a program that offers tools to AI coding assistants over a standard protocol, and [Part 3](../part3-mcp/why-mcp.md) explains that protocol properly.
     2. Its tagline is its thesis: "Maximum context, minimum tokens — with the benchmarks to prove it."
     3. Its job is to sit beside a code repository and hand curated context to whatever assistant asks. It retrieves the relevant files, compresses them structurally, remembers project facts, and measures how much survived the compression.
     4. It is local-first. Embeddings are computed on your own machine with a local ONNX model, vectors live in SQLite via sqlite-vec, and it sends no telemetry by default.

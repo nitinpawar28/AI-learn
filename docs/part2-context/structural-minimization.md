@@ -167,7 +167,7 @@ What matters is how much *meaning* survives, and that has to be measured rather 
 
 Sankshep's minimizer is a production version of exactly this design.
 
-As of v2.0.0 it parses 12 languages — C#, JavaScript, TypeScript, TSX, Python, Go, Java, C, C++, Rust, PHP, Ruby — through tree-sitter, with per-language `.scm` queries. Choosing tree-sitter's breadth over Roslyn's C#-only semantic depth is ADR-0003, unpacked in a capstone [case study](../part5-capstone/case-tree-sitter-vs-roslyn.md).
+As of v3.0.0 it parses 12 languages — C#, JavaScript, TypeScript, TSX, Python, Go, Java, C, C++, Rust, PHP, Ruby — through tree-sitter, with per-language `.scm` queries. Choosing tree-sitter's breadth over Roslyn's C#-only semantic depth is ADR-0003, unpacked in a capstone [case study](../part5-capstone/case-tree-sitter-vs-roslyn.md).
 
 The per-request pipeline:
 

@@ -117,7 +117,7 @@ The risks are equally concrete.
 !!! example "In the wild: Sankshep"
     Sankshep is the deliberate counter-example. It refuses to route, because it refuses to call models at all.
 
-    As of 2026-09-20, at v2.0.0, it makes no LLM call at request time. `compose_task_prompt` returns "a prompt, not an answer" per ADR-0013, and a build-time test enforces that no model client can enter the composition path.
+    As of 2026-09-20, at v3.0.0, it makes no LLM call at request time. `compose_task_prompt` returns "a prompt, not an answer" per ADR-0013, and a build-time test enforces that no model client can enter the composition path.
 
     ```mermaid
     flowchart LR
