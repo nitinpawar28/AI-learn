@@ -157,3 +157,25 @@ The swap is contained — vectors in, vectors out. But it is a migration, not a 
         Update every model-card setting the pipeline depends on: dimensions, pooling rule, normalization, and the asymmetric query prefix. All are per-model.
 
         Then re-run the same recall evals that triggered the swap. That confirms the bottleneck moved, and keeps the regression gate honest about what the new model actually delivers.
+
+## Try it
+
+Turn "a small local model is enough" from an opinion into a number for *your* corpus.
+
+1. Measure the corpus. Count the files you would actually index and their total size:
+
+    ```bash
+    find . -name "*.py" -o -name "*.cs" -o -name "*.ts" | wc -l
+    ```
+
+2. Estimate chunks. Divide total characters by roughly 4 for tokens, then by your chunk size. Round up generously.
+
+3. Time the local path. Embed a few hundred chunks with any small CPU model (bge-small, all-MiniLM - both run on a laptop) and record chunks per second. Multiply out to a full index build, and note that re-indexing is incremental after the first run.
+
+4. Price the cloud path. Take a hosted embedding API's published per-million-token rate and multiply by step 2. Do it twice: once for the initial build, once for a month of edits.
+
+5. Now write down the number that actually decides it - not cost. **Per-query latency**, including the network round trip, and what happens to your tool on a plane.
+
+Most people are surprised by step 4: at one-repository scale the cloud bill is often trivial, which means cost is *not* the argument and anyone making it has picked the weakest one available. The real arguments are the round trip on every query, the key, and the egress.
+
+Then find the flip condition. Raise the corpus size in step 2 until the local index build stops being something you would wait for. That number - yours, not this page's - is where the decision changes.

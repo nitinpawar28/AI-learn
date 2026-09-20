@@ -154,3 +154,23 @@ The same benchmark harness that justified the decision, described in [Case study
         A C#-only scope alone does not justify it either. If the syntactic pipeline's measured recall already holds — 0.94 at Balanced, per `docs/benchmarks.md` — depth buys nothing you can demonstrate.
 
         Only together do the clauses make Roslyn both *sufficient* for the promise and *necessary* for the quality.
+
+## Try it
+
+Make the breadth-versus-depth axis a percentage of your own repository.
+
+1. Count what is actually in there:
+
+    ```bash
+    git ls-files | grep -oE '[^.]+$' | sort | uniq -c | sort -rn | head -15
+    ```
+
+2. Work out the coverage of a single-language semantic engine. If you picked the best one available for your largest language, what fraction of the files in step 1 would it read? For most repositories with a frontend, a backend, and some infrastructure, the honest answer is under half.
+
+3. Now take one concrete task - *list every function definition with its line range* - and try it three ways on the same file: a regex, a parser, and a full semantic engine if one exists for that language.
+
+4. Then run all three against a file that does not compile. Delete a closing brace and re-run.
+
+Step 4 is the one worth doing. A semantic engine generally needs a resolvable project to answer at all, while a syntactic parser recovers and still gives you most of the tree - and a tool that reads working trees meets broken code constantly.
+
+Finally, name what you gave up, out loud. A syntactic parser cannot tell you what a name *refers to*: no call graphs, no type resolution, no "find all implementations". If your task needs those, breadth is the wrong trade and this case study argues against you - which is what a real decision record is supposed to be able to do.

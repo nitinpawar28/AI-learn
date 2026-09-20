@@ -161,3 +161,26 @@ What would *not* change it: convenience.
         And the `--http` transport binds to loopback, failing closed on unauthenticated non-loopback use.
 
         You can run the server air-gapped and observe that it still works. That is verification by construction, rather than by trust.
+
+## Try it
+
+Test a privacy claim the way the architecture would, not the way the policy does.
+
+1. Pick a developer tool you already trust with your source code.
+
+2. Cut its network. Airplane mode is enough; a firewall rule denying just that binary is better, because it isolates the tool from everything else:
+
+    ```bash
+    # macOS / Linux: watch what it tries to reach, before blocking it
+    sudo lsof -i -nP | grep -i <tool>
+    ```
+
+3. Use it normally for ten minutes. Do the things you do every day.
+
+4. Write down what broke, and sort each into one of two piles: **needed the network to do the work**, or **needed the network to report on the work**.
+
+5. Now read the tool's privacy policy and compare it with your two piles.
+
+The second pile is the interesting one, and the comparison is the point. A policy tells you what a vendor promises to collect; the second pile tells you what the product is *built* to send. When the piles disagree, believe the piles.
+
+Then turn it on yourself. Take something you maintain, cut its network, and see which pile your own failures land in. "No telemetry by default" is cheap to write in a README and expensive to make structurally true - that asymmetry is exactly why the claim is worth verifying rather than reading.

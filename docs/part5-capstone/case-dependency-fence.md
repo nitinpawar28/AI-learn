@@ -175,3 +175,26 @@ A solo maintainer forgets rules under deadline exactly the way a large team does
         The test converts a slow architectural regression — normally discovered during a painful upgrade — into an immediate red build.
 
         The alternative enforcement, prose plus vigilance, is the "fence by convention" option this page rejects. It erodes one convenient shortcut at a time.
+
+## Try it
+
+Find the fence your own codebase is missing, and make it fail before you make it pass.
+
+1. Name the dependency you would least like to find everywhere. A vendor SDK, an ORM, a web framework - whatever would hurt most to replace.
+
+2. List every module that references it today:
+
+    ```bash
+    # adjust the pattern to your manifest format
+    grep -rl "the-dependency" --include="*.csproj" --include="package.json" --include="pom.xml" .
+    ```
+
+3. Draw the line you wish existed. Which *one* module should be allowed to name it? Write that sentence down before you look at the answer from step 2 - the gap between the two is your drift.
+
+4. Write a single test that asserts the reference list, and read it from the manifest rather than from an import scan, so a transitive path cannot sneak past.
+
+5. **Make it red first.** Add the reference to a module that should not have it, and watch the test fail. Then remove it and watch it pass.
+
+Step 5 is the whole exercise. A structural test nobody has seen fail is indistinguishable from one that asserts nothing - and this kind is especially easy to get wrong, because a typo in a project name yields a test that passes forever.
+
+If step 2 returns one module already, you have the fence and not the guard. Write the test anyway. It costs an hour now and catches the shortcut someone takes under deadline in a year.
