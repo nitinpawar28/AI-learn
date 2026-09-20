@@ -10,7 +10,7 @@ By the end you will be able to defend a [dependency fence](../part3-mcp/writing-
 
 ## The context
 
-Sankshep v1.8.0 is a .NET 9 MCP server with a small protocol surface — eight [tools, one prompt, and one resource](../part3-mcp/primitives.md) — and a large domain underneath it.
+Sankshep v3.0.0 is a .NET 10 MCP server with a small protocol surface — eight [tools, one prompt, and one resource](../part3-mcp/primitives.md) — and a large domain underneath it.
 
 That domain holds [structural minimization](../part2-context/structural-minimization.md), [retrieval](../part2-context/rag-for-code.md), [persistent memory](../part2-context/persistent-memory.md), a deterministic [composer engine](../part4-agents/grounded-prompting.md), and an [eval harness](../part2-context/measuring-quality.md).
 
@@ -20,7 +20,7 @@ The protocol layer, by contrast, sits on moving ground.
 
 MCP itself keeps shipping revisions, and [What problem MCP solves](../part3-mcp/why-mcp.md) tracks the dated status. The official C# SDK moves with it.
 
-As of 2026-07-18, the SDK's stable release is 1.4.1, published 2026-07-09. And a 2.0.0-preview.3 already sits on the same NuGet feed.
+As of 2026-09-20, the SDK's 2.x line is GA and has already moved twice more, to 2.1.0 and 2.2.0. The fence is what makes that a one-project migration each time — see [writing a server](../part3-mcp/writing-a-server.md), which owns this fact.
 
 [Writing an MCP server](../part3-mcp/writing-a-server.md) owns the dated version details. What matters here is the shape of the fact: a major-version migration is not hypothetical for this dependency. It is pre-announced.
 

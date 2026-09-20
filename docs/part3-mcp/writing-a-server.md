@@ -113,12 +113,12 @@ A production example follows in a moment. The full design rationale is in the ca
 
 Is the churn threat real? Look at the official C# SDK's release feed.
 
-!!! warning "Evolving — verified 2026-07-18"
-    The official C# SDK ships on NuGet as `ModelContextProtocol`, with `ModelContextProtocol.Core` and `ModelContextProtocol.AspNetCore` variants. It is maintained in the MCP organization together with Microsoft. The SDK is GA: the stable release is 1.4.1, published 2026-07-09, and a 2.0.0-preview.3 is already on the feed. This changes quickly; check the [NuGet package page](https://www.nuget.org/packages/ModelContextProtocol) for current values.
+!!! warning "Evolving — verified 2026-09-20"
+    The official C# SDK ships on NuGet as `ModelContextProtocol`, with `ModelContextProtocol.Core` and `ModelContextProtocol.AspNetCore` variants. It is maintained in the MCP organization together with Microsoft. The 2.x line is GA — 2.0.0, 2.1.0 and 2.2.0 are all released — and 1.x is a generation behind. This changes quickly; check the [NuGet package page](https://www.nuget.org/packages/ModelContextProtocol) for current values.
 
 Read that box as an argument, not just a version report.
 
-A stable 1.4.1 and a 2.0 preview exist *at the same time*. The major-version migration is not hypothetical. It is already published.
+**The major-version migration already happened.** When this chapter was first written the feed held a stable 1.4.1 alongside a 2.0 preview, and the point being made was that the migration was coming. It came: 2.x went GA and then moved twice more, to 2.1.0 and 2.2.0, inside two months. That is the tempo a protocol SDK sets, and it is why the boundary this chapter is about matters — a dependency that moves this fast is one you want touching as few of your projects as possible.
 
 Whether it costs you an afternoon or a quarter depends on which side of a fence your SDK reference lives.
 
@@ -128,7 +128,7 @@ Sankshep's solution shape is this chapter's structure, enforced. ADR-0004 confin
 
 ```mermaid
 flowchart TB
-    SDK["NuGet: ModelContextProtocol 1.4.1<br/>(the MCP SDK)"] --> SRV
+    SDK["NuGet: ModelContextProtocol 2.2.0<br/>(the MCP SDK)"] --> SRV
     SRV["Server<br/>composition root — the only project<br/>referencing the SDK"]
     SRV --> MIN["Minimizer<br/>TreeSitter.DotNet, ML.Tokenizers"]
     SRV --> MEM["Memory<br/>Microsoft.Data.Sqlite, sqlite-vec,<br/>ONNX Runtime"]
@@ -160,7 +160,7 @@ Two details are worth stealing for any server you build.
 
 So the wire protocol you learned two chapters ago doubles as the test interface, and the tests exercise exactly what a real client would.
 
-When SDK 2.0 lands, Sankshep's migration is one project. Which is the whole point.
+SDK 2.0 landed, and then 2.1 and 2.2. Each migration was one project — the real one Sankshep ran is on 2.2.0 today. Which is the whole point.
 
 ## Checkpoints
 

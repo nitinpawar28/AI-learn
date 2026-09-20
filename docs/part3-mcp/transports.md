@@ -163,7 +163,7 @@ An HTTP server sits on a network boundary. So it must verify every caller before
 
 ## In practice: Sankshep
 
-[Sankshep](../part0-orientation/running-example.md) — as of 2026-07-18, at v1.8.0 — ships both transports, and makes the textbook choice for each.
+[Sankshep](../part0-orientation/running-example.md) — as of 2026-09-20, at v3.0.0 — ships both transports, and makes the textbook choice for each.
 
 The default is stdio, and its logging is stderr-only. That is exactly the reason in the danger box above: stdout carries JSON-RPC, so all diagnostics go to stderr as shipped policy. One binary, launched as a subprocess from an IDE's config file, is the entire local deployment story.
 

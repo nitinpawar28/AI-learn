@@ -61,9 +61,9 @@ The outcome: `get_context` returns a single plain-text content block and declare
 
 The published results follow the same discipline.
 
-Sankshep's public `docs/benchmarks.md`, verified 2026-07-18, reports `keypoint-recall-v1`: 8 questions, 50 atomic facts, judged by Claude Opus with a verbosity guard.
+Sankshep's [public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/), verified 2026-09-20, reports `keypoint-recall-v1`: 8 questions, 52 atomic facts, judged by `claude-opus-4-8` with a verbosity guard.
 
-It includes the unflattering rows. Aggressive scores 0.11 recall at 87.9% compression — lossy by design, and printed anyway. And a composed-versus-naive comparison where naive context scored 0.96 recall against the composed prompt's 0.63, at a 32.6% token reduction.
+It includes the unflattering rows. Aggressive scores 0.10 recall at 77.5% compression — lossy by design, and printed anyway. Conservative recovers only 0.50 of these facts even though it keeps every method body, which is the least flattering number on the page and is printed first. And a composed-versus-naive comparison where naive context scored 0.96 recall against the composed prompt's 0.63, at a 32.6% token reduction.
 
 "Roundtrips avoided" — the plausible claim that better context saves whole [loop rounds](../part4-agents/cost-efficiency.md) — is explicitly not measured. So it is not claimed.
 
@@ -72,7 +72,7 @@ It includes the unflattering rows. Aggressive scores 0.11 recall at 87.9% compre
 - **In-process evals.** Import the compression pipeline as a library and score it directly. Faster to run, trivial to debug, and the most common choice in practice. But it measures a proxy artifact: every bug living between the library and the user — packaging, transport, serialization, configuration — is invisible to it.
 - **Scope-based savings and dollar totals.** Divide everything the tool *could* have sent by what it did send, multiply by a token price, and report money saved. This produces much larger, executive-friendly numbers. Both factors come from different universes than the actual request.
 - **Dual-encoding results.** Return prose *and* structured JSON, so every client is served. Looks generous. In practice the two encodings drift into two payloads, and clients either pay for the duplication on every [loop round](../part4-agents/cost-efficiency.md), or silently drop one half.
-- **A curated benchmark page.** Publish Balanced's 0.94, and omit Aggressive's 0.11 and the composed-prompt tradeoff. Standard industry practice — and indistinguishable from marketing, which is the problem.
+- **A curated benchmark page.** Publish Balanced's 0.67, and omit Aggressive's 0.10 and the composed-prompt tradeoff. Standard industry practice — and indistinguishable from marketing, which is the problem.
 
 ## The tradeoffs
 
@@ -80,13 +80,13 @@ The chosen path pays real costs.
 
 Subprocess evals are slower and operationally heavier than in-process calls. Process lifecycles, stdio buffering, and startup time all become the harness's problem.
 
-Honest denominators make the headline numbers smaller. 30.4% compression at 0.94 recall for Balanced, verified 2026-07-18, is a modest figure next to the "up to 90%" a scope-based denominator would justify.
+Honest denominators make the headline numbers smaller. 59.5% compression at 0.67 recall for Balanced, verified 2026-09-20, is a modest figure next to the "up to 90%" a scope-based denominator would justify.
 
 Deleting dollar figures removes the single most persuasive line from any report.
 
 A single plain-text result block gives up a machine-readable channel some client might have used.
 
-And publishing 0.11 and 0.63 hands every skeptical reader the worst rows first.
+And publishing 0.10, and a composed prompt that recovers 0.66 where an uncapped dump recovers 1.00, hands every skeptical reader the worst rows first.
 
 What it buys is that every remaining claim survives scrutiny.
 
@@ -135,7 +135,7 @@ Three conditions would reopen these decisions, each on its own axis.
 
         The fix is positional. The client layer holds real prices and pays the bill, so it can compute dollars legitimately. The server cannot.
 
-3. Sankshep publishes Aggressive's 0.11 recall, and a composed-versus-naive result where its own composed prompt loses on recall, 0.63 against 0.96. What does publishing these numbers do for the 0.94 rows?
+3. Sankshep publishes Aggressive's 0.10 recall, and a composed-versus-naive result where its own composed prompt loses on recall, 0.66 against 1.00. What does publishing these numbers do for the 0.94 rows?
 
     ??? success "Answer"
         It certifies the instrument.

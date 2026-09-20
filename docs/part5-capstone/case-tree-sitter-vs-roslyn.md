@@ -35,7 +35,7 @@ As [Structural minimization](../part2-context/structural-minimization.md) showed
 
 ADR-0003: parse everything with tree-sitter.
 
-One framework, eleven grammars. As of v1.8.0, Sankshep parses C#, JavaScript, TypeScript, Python, Go, Java, C, C++, Rust, PHP, and Ruby. Each has a `.scm` query file telling the transforms what to look for.
+One framework, twelve grammars. As of v3.0.0, Sankshep parses C#, JavaScript, TypeScript, TSX, Python, Go, Java, C, C++, Rust, PHP, and Ruby. Each has a `.scm` query file telling the transforms what to look for.
 
 The operational details carry most of the reliability story.
 
@@ -58,7 +58,7 @@ It covers exactly one of the eleven languages Sankshep promises.
 flowchart TB
     subgraph ts["Chosen — tree-sitter: breadth, syntactic"]
         direction LR
-        A1["Working-tree file<br/>any of 11 languages"] --> A2["tree-sitter parse<br/>(error-tolerant)"]
+        A1["Working-tree file<br/>any of 12 languages"] --> A2["tree-sitter parse<br/>(error-tolerant)"]
         A2 --> A3["Per-language<br/>.scm queries"]
         A3 --> A4["Syntactic transforms<br/>(comments, bodies,<br/>whitespace)"]
         A4 --> A5["Minimized code —<br/>known gaps published"]
@@ -82,7 +82,7 @@ That is not one decision. It is ten more of them, forever.
 
 | Axis | tree-sitter (chosen) | Roslyn |
 |---|---|---|
-| Language coverage | 11 languages, one framework | C# (and Visual Basic) — one of the 11 |
+| Language coverage | 12 languages, one framework | C# (and Visual Basic) — one of the 11 |
 | Analysis depth | syntactic: the tree's shape | semantic: symbols, references, types |
 | Broken working-tree input | error-tolerant by design | also recovers well — it powers IDE tooling |
 | Unused-import removal | heuristic | exact — the compiler reports real usage |
