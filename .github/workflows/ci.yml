@@ -1,0 +1,61 @@
+# Validate a pull request before it reaches main.
+#
+# Why this exists (2026-09-21): `deploy.yml` runs only on push to main, so until now the FIRST
+# thing to evaluate a change was the deploy itself. A broken internal link, a page missing from
+# `nav`, or a malformed admonition would land on main and then either fail the deploy - leaving
+# the published site on its previous build with no obvious signal - or publish quietly wrong.
+#
+# `mkdocs build --strict` is the whole gate, deliberately. It is exactly what deploy.yml runs, so
+# a green check here means the deploy step cannot fail for content reasons. Strict turns MkDocs
+# warnings into errors, which is what catches a link to a page that was renamed or never existed.
+#
+# Action versions are floating major tags to match deploy.yml. This repository publishes a public
+# static site and holds no secrets; it is deliberately not on Sankshep's SHA-pinning rule, whose
+# reason is a supply chain that reaches a signed release artifact.
+name: ci
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Build site (strict)
+        run: mkdocs build --strict
+
+      # Every page must be reachable. MkDocs reports an orphan as INFO, not a warning, so
+      # --strict does not catch it: a new chapter that never made it into mkdocs.yml's nav
+      # builds happily and is then reachable only by guessing its URL.
+      - name: Every page is in the nav
+        run: |
+          set -euo pipefail
+          missing=0
+          while IFS= read -r f; do
+            rel="${f#docs/}"
+            if ! grep -qF "$rel" mkdocs.yml; then
+              echo "::error file=$f::$rel is not referenced in mkdocs.yml nav"
+              missing=$((missing + 1))
+            fi
+          done < <(find docs -name '*.md' ! -name 'index.md')
+          if [ "$missing" -gt 0 ]; then
+            echo "$missing page(s) build but are unreachable from the nav."
+            exit 1
+          fi
+          echo "every page is in the nav"
