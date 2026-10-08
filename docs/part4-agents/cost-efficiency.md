@@ -18,8 +18,8 @@ A single call bills two quantities: input tokens sent, and output tokens produce
 
 Output tokens are the pricier kind. But input dominates agent bills by volume, because tool results and history dwarf anything a model writes back.
 
-!!! warning "Evolving — verified 2026-07-18"
-    Per-token prices change often and vary by provider and model, so this page states none. Two structural facts held across major providers as of 2026-07-18: output tokens cost more per token than input tokens, and cache-read input tokens cost less than fresh ones. This changes quickly; check the official pricing pages — [Anthropic](https://docs.anthropic.com/en/docs/about-claude/pricing), [OpenAI](https://platform.openai.com/docs/pricing), [Gemini](https://ai.google.dev/gemini-api/docs/pricing) — for current values.
+!!! warning "Evolving — verified 2026-10-08"
+    Per-token prices change often and vary by provider and model, so this page states none. Two structural facts held across major providers as of 2026-10-08: output tokens cost more per token than input tokens, and cache-read input tokens cost less than fresh ones. This changes quickly; check the official pricing pages — [Anthropic](https://platform.claude.com/docs/en/about-claude/pricing), [OpenAI](https://developers.openai.com/api/docs/pricing), [Gemini](https://ai.google.dev/gemini-api/docs/pricing) — for current values.
 
 In a loop, round N re-sends everything from rounds 1 through N−1.
 
@@ -117,7 +117,7 @@ The risks are equally concrete.
 !!! example "In the wild: Sankshep"
     Sankshep is the deliberate counter-example. It refuses to route, because it refuses to call models at all.
 
-    As of 2026-09-20, at v3.0.0, it makes no LLM call at request time. `compose_task_prompt` returns "a prompt, not an answer" per ADR-0013, and a build-time test enforces that no model client can enter the composition path.
+    It makes no LLM call at request time. `compose_task_prompt` returns "a prompt, not an answer" per ADR-0013, and a build-time test enforces that no model client can enter the composition path.
 
     ```mermaid
     flowchart LR
@@ -143,7 +143,7 @@ The risks are equally concrete.
 
     Byte-identical outputs, which are golden-testable and cache-stable across reruns. Zero marginal model cost, since a tool call spends CPU rather than tokens. And composability: with no hidden model calls of its own, the server behaves identically under *any* client's routing policy.
 
-    Its efficiency contribution is therefore Lever 1 only. The Balanced profile reaches 0.67 key-point recall at 59.5% compression, per Sankshep's published benchmarks, verified 2026-07-18.
+    Its efficiency contribution is therefore Lever 1 only: fewer tokens per call, with what that costs in recall measured rather than assumed. [Measuring context quality](../part2-context/measuring-quality.md) gives its published numbers, with their date and the judge's error bar.
 
     The honesty coda: "roundtrips avoided" — the idea that better context saves whole rounds — is [explicitly not measured, so it is not claimed](../part2-context/measuring-quality.md).
 
@@ -163,11 +163,13 @@ The rule in one line: degrade quality gracefully; never degrade safety or honest
 !!! example "In the wild: Sankshep"
     Here is the fail-soft ladder.
 
-    A missing tree-sitter grammar means the file [passes through unminimized](../part2-context/structural-minimization.md). sqlite-vec unavailable means brute-force similarity in pure C#. An empty index means lexical search. And a request that would deliver zero tokens raises a loud tool-level error — `isError`, per ADR-0016 — rather than a silently empty success.
+    A tree-sitter grammar that fails to load affects only its own language, whose files [pass through unminimized](../part2-context/structural-minimization.md). sqlite-vec unavailable means brute-force similarity in pure C#. An empty index means `get_context` ranks the files under its `paths` lexically. `search_code`, which has no lexical fallback, reports the empty index as an error instead, for the reason [Retrieval for code](../part2-context/rag-for-code.md#in-practice-sankshep) gives. And a request that would deliver zero tokens raises a loud tool-level error — `isError`, per ADR-0016 — rather than a silently empty success.
 
     Every rung returns fewer or plainer tokens. Never wrong ones.
 
-    The fail-closed points are the other category. Unauthenticated non-loopback HTTP is refused, as [Safety and judgment](safety.md) covers. An embedding-model download failing its SHA-256 check is discarded. And the eval-regression gate fails the build.
+    In 4.0.0 — built, not yet published as of 2026-10-08 — one new rung bends that rule, and says so. Rather than spend minutes re-embedding after a branch switch, `search_code` re-embeds at most 25 changed files, answers, and says in its header how many it left stale — files whose hits may be out of date. The [verify-on-read case study](../part5-capstone/case-verify-on-read.md#what-would-change-it) covers how they catch up and what the trade costs.
+
+    The fail-closed points are the other category. An HTTP server bound to a non-loopback address with no authentication refuses to start, as [Safety and judgment](safety.md) covers. An embedding-model download failing its SHA-256 check is discarded. And the maintainer's benchmark run fails closed: it exits non-zero when recall regresses. Because a judged run costs API calls, it runs on demand rather than on every merge.
 
     Quality bends. Integrity does not.
 

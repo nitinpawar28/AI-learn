@@ -104,10 +104,10 @@ xychart-beta
     line [97, 95, 90, 79, 64, 52]
 ```
 
-The curve makes an argument rather than reporting a benchmark. But two x-positions are real platform facts. Around 20 is where vendor guidance starts advising caution. And 128 is a hard cap on one major API.
+The curve makes an argument rather than reporting a benchmark. But two x-positions are real platform facts. Around 20 is where vendor guidance starts advising caution. And 128 is a hard cap on more than one major platform.
 
-!!! warning "Evolving — verified 2026-07-18"
-    As of 2026-07-18, the 128-tool limit is **OpenAI's** tools-array cap. It is a platform limit, not part of the MCP spec, and not an Anthropic limit. OpenAI's guidance recommends keeping fewer than about 20 tools active for reliable selection. Anthropic imposes no hard tool-count cap, and offers a Tool Search Tool that lets tool definitions be discovered on demand instead of loaded up front. Anthropic's engineering guidance names the underlying erosion "context rot": quality degrades as the window fills with marginally relevant material. This changes quickly; check the [OpenAI function-calling docs](https://platform.openai.com/docs/guides/function-calling) and [Anthropic's tool-use docs](https://docs.claude.com/en/docs/agents-and-tools/tool-use/overview) for current values.
+!!! warning "Evolving — verified 2026-10-08"
+    As of 2026-10-08, 128 is a hard cap in more than one place, and the MCP spec is not one of them. VS Code, a client, allows at most 128 tools enabled in one chat request. Azure OpenAI, a model API, allows at most 128 tools in one chat-completions request. The model vendors also publish selection guidance. OpenAI's guide suggests fewer than 20 functions available at the start of a turn, calling that "just a soft suggestion". Anthropic's tool-search docs say Claude's ability to pick the right tool "degrades once you exceed 30–50 available tools". Both now offer tool search, which loads deferred tool definitions only when the model needs them; Anthropic's accepts up to 10,000 deferred tools per request. [Anthropic's engineering guidance](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) names the underlying erosion "context rot": as the window fills, the model's ability to recall information from it declines. This changes quickly; check [VS Code's tools docs](https://code.visualstudio.com/docs/agents/run/tools), [Azure OpenAI's quotas and limits](https://learn.microsoft.com/en-us/azure/foundry/openai/quotas-limits), the [OpenAI function-calling guide](https://developers.openai.com/api/docs/guides/function-calling), and [Anthropic's tool search docs](https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool) for current values.
 
 The portable lesson: platform caps are the outer wall, not the target. Selection degrades long before any limit rejects your request.
 
@@ -193,7 +193,7 @@ Two of that chain's conclusions restate this chapter in Sankshep's own words. Me
 **5.** A vendor ships an MCP server exposing 130 tools. One team's agent setup rejects it outright. Another's accepts it but selects tools poorly. Explain both outcomes.
 
 ??? success "Answer"
-    The hard rejection is a platform cap. As of 2026-07-18, OpenAI's API limits the tools array to 128 entries. That is an OpenAI limit, not an MCP or Anthropic one, so an Anthropic-backed setup accepts all 130.
+    The hard rejection is a platform cap, set by the client or by the model API, not by MCP. As of 2026-10-08, VS Code allows at most 128 tools enabled in one chat request, and Azure OpenAI at most 128 tools in one chat-completions request. A setup whose client and model API both allow more can accept all 130.
 
     But acceptance is not health. Selection erodes well before any cap, since every definition consumes window space and adds near-miss candidates.
 
