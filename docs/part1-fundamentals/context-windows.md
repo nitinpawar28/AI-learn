@@ -54,8 +54,8 @@ The consequence for cost is quiet but brutal. Each bill contains all the ones be
 
 Window sizes move faster than almost any other number in this field. So this page — and only this page — states them, with a date.
 
-!!! warning "Evolving — verified 2026-07-18"
-    As of 2026-07-18: Anthropic's Claude models have a 1,000,000-token window as the generally available default on Opus 4.8, 4.7, and 4.6, Sonnet 5 and 4.6, and Fable 5 / Mythos 5. Sonnet 4.5 stays at 200,000 (see the [Anthropic model docs](https://docs.anthropic.com/en/docs/about-claude/models)). OpenAI's flagship GPT-5.5 accepts a 1,050,000-token context with a 128,000-token output limit (see the [OpenAI model docs](https://platform.openai.com/docs/models)). Gemini 2.5 Pro offers 1,000,000 tokens, with roughly 2,000,000 available through Vertex AI tiers (see the [Gemini model docs](https://ai.google.dev/gemini-api/docs/models)). This changes quickly; check those official pages for current values.
+!!! warning "Evolving — verified 2026-10-08"
+    As of 2026-10-08: Anthropic's current Claude models — Fable 5.1, Opus 5.5, Sonnet 5.5, and Haiku 5.5 — all have a 1M-token window and a 128K-token output limit. Some older models still on offer keep a 200K-token window; [Haiku 4.5](https://platform.claude.com/docs/en/models/haiku-4-5/overview), for one, pairs it with a 64K-token output limit (see the [Anthropic model docs](https://platform.claude.com/docs/en/models/overview)). OpenAI's GPT-6 Astra, GPT-6.1 Sol, and GPT-6 Luna each list a 1,050,000-token context window and a 128,000-token output limit (see the [OpenAI model docs](https://developers.openai.com/api/docs/models)). Google's [Gemini 3.8 Flash](https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash) and [Gemini 3.1 Pro](https://ai.google.dev/gemini-api/docs/models/gemini-3.1-pro-preview) (a preview) each accept up to 1,048,576 input tokens and produce up to 65,536 output tokens (see the [Gemini model docs](https://ai.google.dev/gemini-api/docs/models)). This changes quickly; check those official pages for current values.
 
 A million tokens sounds like the end of the problem. A whole mid-sized codebase fits.
 

@@ -84,8 +84,8 @@ There is no such thing as *the* token count of a text. There is only its count u
 
 Each model family ships its own vocabulary. A file that measures 1,000 tokens under one encoding may measure 1,150 under another. Counts do not transfer between vendors, and often not even between model generations.
 
-!!! warning "Evolving — verified 2026-07-18"
-    OpenAI's open-source [tiktoken](https://github.com/openai/tiktoken) library is the current way to count tokens for OpenAI models locally, and the GPT-5 family uses its `o200k_base` encoding. Anthropic instead offers a free `POST /v1/messages/count_tokens` API endpoint that returns model-specific counts. Anthropic publishes no tokenizer for Claude 3 and later models, so Claude token counts cannot be computed locally. This changes quickly; check [tiktoken's repository](https://github.com/openai/tiktoken) and [Anthropic's token-counting documentation](https://docs.anthropic.com/en/docs/build-with-claude/token-counting) for current values.
+!!! warning "Evolving — verified 2026-10-08"
+    OpenAI's open-source [tiktoken](https://github.com/openai/tiktoken) library is the current way to count tokens for OpenAI models locally. It maps the GPT-5 family to its `o200k_base` encoding, but has no mapping yet for OpenAI's current GPT-6 models, so a local count for those is an estimate. Anthropic publishes no tokenizer for Claude 3 and later models, so Claude token counts cannot be computed locally. Both vendors offer an API endpoint that counts a whole request with the named model's tokenizer: OpenAI's `POST /v1/responses/input_tokens`, and Anthropic's free `POST /v1/messages/count_tokens`, whose result Anthropic itself calls an estimate. Counts shift between generations too: Anthropic says the tokenizer introduced with Claude Opus 4.7 produces roughly 30% more tokens for the same text than earlier Claude models. This changes quickly; check [tiktoken's repository](https://github.com/openai/tiktoken), [OpenAI's token-counting guide](https://developers.openai.com/api/docs/guides/token-counting) and [Anthropic's token-counting documentation](https://platform.claude.com/docs/en/build-with-claude/token-counting) for current values.
 
 Two practical rules follow. Count with the tokenizer that matches the model whenever you can. When you cannot, pick one encoding, count consistently against it, call the result an estimate, and leave yourself margin.
 
@@ -105,7 +105,7 @@ Code's token cost is structural. That means it can be cut structurally, which is
 !!! example "In the wild: Sankshep"
     [Sankshep](../part0-orientation/running-example.md) packs minimized source code into a token budget its caller supplies. So it has to count tokens for models it does not control.
 
-    It counts every budget with tiktoken's `o200k_base` encoding, through the .NET `Microsoft.ML.Tokenizers` library. But the connected IDE client may hand Sankshep's output to a Claude model, and as of 2026-07-18 there is no public tokenizer for Claude 3 and later.
+    It counts every budget with tiktoken's `o200k_base` encoding, through the .NET `Microsoft.ML.Tokenizers` library. But the connected IDE client may hand Sankshep's output to a Claude model, and as of 2026-10-08 there is no public tokenizer for Claude 3 and later.
 
     So Sankshep documents its budgets as estimates keyed to one encoding. It does not claim exact counts for whichever model ends up reading the text. That is the honest version of an unavoidable compromise: when exact counting is impossible, count consistently against one named encoding, and say which one.
 
@@ -130,7 +130,7 @@ Code's token cost is structural. That means it can be cut structurally, which is
 2. **A script uses tiktoken's `o200k_base` to check whether a prompt fits under a Claude model's context limit. What is wrong, and what should it do instead?**
 
     ??? success "Answer"
-        Token counts do not transfer between tokenizers. `o200k_base` is an OpenAI encoding, and as of 2026-07-18 there is no public tokenizer for Claude 3 and later. So the local count is only an estimate of what Claude will measure.
+        Token counts do not transfer between tokenizers. `o200k_base` is an OpenAI encoding, and as of 2026-10-08 there is no public tokenizer for Claude 3 and later. So the local count is only an estimate of what Claude will measure.
 
         The script should call Anthropic's `count_tokens` endpoint for a model-specific count. If it must count locally, it should treat the result as an estimate and leave a safety margin.
 

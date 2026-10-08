@@ -181,7 +181,7 @@ Five properties decide it, roughly in the order they tend to matter.
 - **Where it runs.** A few hundred megabytes on local CPU, or a hosted API. The next section takes up that trade-off.
 - **Benchmark quality, last.** A benchmark score summarizes someone else's corpus. It is useful for building a shortlist, and nearly worthless for picking the winner from it.
 
-!!! warning "Evolving — verified 2026-08-20"
+!!! warning "Evolving — verified 2026-10-08"
     The usual starting point for a shortlist is **MTEB** (Massive Text Embedding Benchmark) and its multilingual counterpart MMTEB, published as a [leaderboard on Hugging Face](https://huggingface.co/spaces/mteb/leaderboard). It reports a code-retrieval subset separately from prose tasks. Two cautions outlast any particular ranking: MTEB v2 scores are not comparable with v1 scores, and the top of the board reshuffles often enough that any specific recommendation here would be stale before you read it. Use it to shortlist, not to decide; check the leaderboard for current standings.
 
 The reliable procedure is unglamorous, and it beats leaderboard-reading every time.

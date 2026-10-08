@@ -99,16 +99,16 @@ That second point is the mechanism behind the [lost-in-the-middle effect](contex
 
 ## Sampling: choosing one token
 
-!!! warning "Evolving — verified 2026-09-20"
+!!! warning "Evolving — verified 2026-10-08"
     **The mechanism in this section is permanent. The knobs are not, and on Anthropic's API most of them have already closed.**
 
-    The Messages API reference now marks `temperature` **Deprecated**: *"Models released after Claude Opus 4.6 do not support setting temperature. A value of 1.0 will be accepted for backwards compatibility, all other values will be rejected with a 400 error."* And `top_p` and `top_k` no longer appear among the documented request-body parameters at all.
+    The [Messages API reference](https://platform.claude.com/docs/en/api/messages/create) now marks `temperature` **Deprecated**: *"Models released after Claude Opus 4.6 do not support setting temperature. A value of 1.0 will be accepted for backwards compatibility, all other values will be rejected with a 400 error."* It marks `top_p` and `top_k` **Deprecated** too. On those same models any `top_k` is rejected, and setting `top_p` is not supported either: only a value of 0.99 or above is accepted, and only for backwards compatibility. Anthropic's [deprecations page](https://platform.claude.com/docs/en/about-claude/model-deprecations) adds that its Python SDK, from version 1.0, has removed all three, so passing one raises a `TypeError`.
 
     So on a current frontier Claude model you cannot turn any of these dials. Sending `temperature: 0.2` is not ignored — it is a 400.
 
     **Read the rest of this section anyway, and read it as mechanism rather than as a control panel.** Every model still turns logits into a distribution and draws from it; that is why output varies at all, why "temperature 0" was never a guarantee, and why a long answer can contain one absurd word. Understanding the draw is how you reason about all of it. What changed is *who holds the dial* — increasingly the provider, who tunes it per model, rather than you.
 
-    Other providers still expose all three, and open-weight models expose them completely, so the knobs remain worth knowing. Check your provider's current reference before relying on any of them, including this page.
+    OpenAI and Google are moving the same way. OpenAI's API documents no `top_k` at all, and its [GPT-6 guide](https://developers.openai.com/api/docs/guides/latest-model) says to remove `temperature` and `top_p` whenever reasoning effort is anything but `none`. GPT-6 Astra and GPT-6.1 Sol do not support `none`, so on those two models you can never set either one. Google [deprecated all three](https://ai.google.dev/gemini-api/docs/whats-new-gemini-3.6#api-changes-and-parameter-updates) for Gemini 3.6 Flash, Gemini 3.5 Flash-Lite, and every Gemini model released after them: its API now ignores them, which is quieter than a 400 and easier to miss, and Google says future model generations will reject them. Open-weight models still expose them completely, so the knobs remain worth knowing. Check your provider's current reference for your model before relying on any of them, including this page.
 
 The forward pass gives you probabilities. Something still has to pick one token.
 
@@ -315,7 +315,7 @@ This two-source rule drives everything that follows. Choosing which tokens deser
 
 ## Try it
 
-Measure temperature's effect directly. You need a playground or API that still **exposes** a temperature control — per the box above, current frontier Claude models reject anything but `1.0`, so reach for an open-weight model or another provider. That constraint is itself the lesson: the mechanism is everywhere, the dial is not.
+Measure temperature's effect directly. You need a playground or API that still **honors** a temperature setting — per the box above, current frontier Claude models reject anything but `1.0`, and Gemini's newest models ignore it, which would quietly make both columns below look alike. So reach for an open-weight model, or confirm that the model you pick still applies the setting. That constraint is itself the lesson: the mechanism is everywhere, the dial is not.
 
 1. Pick a prompt with many acceptable answers:
 
