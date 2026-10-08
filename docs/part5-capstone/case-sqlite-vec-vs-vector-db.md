@@ -14,7 +14,7 @@ Sankshep's retrieval pipeline is the one Part 2 taught.
 
 [Indexing](../part2-context/rag-for-code.md) chunks a repository symbol by symbol from the AST. Each chunk becomes a 384-dimensional, L2-normalized [embedding](../part1-fundamentals/embeddings.md), computed with a local ONNX model. The model choice is [its own case study](case-local-onnx-vs-cloud.md). Then the vectors get stored.
 
-At query time, the `search_code` [tool](../part3-mcp/primitives.md) first re-verifies the index against the working tree, which is [another case study](case-verify-on-read.md). Then it runs k-nearest-neighbor search over those vectors, and blends the result with lexical scores at 0.6 semantic to 0.4 lexical.
+At query time, the `search_code` [tool](../part3-mcp/primitives.md) first re-verifies the index against the working tree, which is [another case study](case-verify-on-read.md). In 4.0.0, built but not yet published as of 2026-10-08, that step [re-embeds at most 25 changed files per search](case-verify-on-read.md#what-would-change-it), and the result says how many it left stale. Then `search_code` runs k-nearest-neighbor search over the stored vectors and ranks by that similarity alone, with no lexical blend.
 
 The step this page cares about is the unglamorous one in the middle. *Stores the vectors.*
 
@@ -24,7 +24,7 @@ Three constraints shape it.
 
 Back of the envelope: 10,000 chunks × 384 floats × 4 bytes is about 15 MB of vectors. Repo-scale is not web-scale, and pretending otherwise is where over-engineering starts.
 
-**The deployment target is a developer's machine.** Sankshep is [local-first](case-local-first.md). As of v1.8.0 it runs as a stdio subprocess of an IDE client and sends no telemetry by default.
+**The deployment target is a developer's machine.** Sankshep is [local-first](case-local-first.md). It runs as a stdio subprocess of an IDE client and sends no telemetry by default.
 
 It cannot reasonably ask every user to install, start, and upgrade a separate database service just to search their own code.
 
@@ -73,7 +73,7 @@ flowchart TB
     subgraph ladder["The absence story (degradation ladder)"]
         R1["vec0 loads:<br/>cosine KNN in SQL"]
         R2["extension unavailable:<br/>pure-C# SIMD brute-force<br/>over the same stored vectors"]
-        R3["nothing indexed yet:<br/>lexical search alone"]
+        R3["nothing indexed yet:<br/>get_context ranks lexically,<br/>search_code reports an error,<br/>not an empty answer"]
         R1 -.->|"falls back"| R2
         R2 -.->|"falls back"| R3
     end
@@ -113,13 +113,13 @@ What the embedded choice gives up:
 
 - **Scale headroom.** Exact KNN is linear in corpus size. At millions of vectors, latency would force an approximate index and, eventually, a real service. Sankshep's corpus is structurally bounded — one repository per index — so the ceiling is far away. But it exists.
 - **A shared index.** There is no server for teammates to point at. Every machine indexes its own clone via `index_repo`. For a single-developer, local-first tool this is the correct default, but it rules out "the team searches one warm index" until the flip condition below.
-- **A native dependency.** sqlite-vec is a native extension, and native extensions can fail to load on some platform or packaging combination. That risk is priced in: the failure path is the brute-force rung, not an error.
+- **A native dependency.** sqlite-vec is a native extension, and native extensions can fail to load on some platform or packaging combination. That risk is priced in: the failure path is the brute-force rung, not an error. A change of build is priced in too. Each index records which build of the extension wrote it, so when 3.0.0 changed that build, every index was rebuilt once rather than read by a different build (see the public [3.0.0 upgrade notes](https://nitinpawar28.github.io/sankshep-docs/upgrading-3.0/)).
 
 What it wins:
 
 - **Zero operations.** No install step, no daemon, no port, no upgrade cycle. The store's lifecycle is the file's lifecycle.
 - **Privacy by structure.** Vectors computed from proprietary code never cross a network. That is a [privacy promise enforced by architecture](case-local-first.md) rather than by policy.
-- **Fail-soft behavior.** The ladder — vec0, then brute-force, then lexical — is the retrieval half of the degradation economics from [Cost and efficiency](../part4-agents/cost-efficiency.md). Degrade quality gracefully, never degrade correctness.
+- **Fail-soft behavior.** The ladder — vec0, then brute-force, then lexical-only ranking in `get_context` — is the retrieval half of the degradation economics from [Cost and efficiency](../part4-agents/cost-efficiency.md). Degrade quality gracefully, never degrade correctness.
 - **A bounded blast radius.** In the [solution shape](case-dependency-fence.md), sqlite-vec is a dependency of exactly one project: Memory. If it ever had to be replaced, the fence marks where the surgery ends.
 
 ## What would change it
@@ -163,11 +163,11 @@ Declare a different scope, and the same reasoning flips the same decision.
 2. What is sqlite-vec's absence story in Sankshep, and what does each rung of it sacrifice?
 
     ??? success "Answer"
-        If the native vec0 extension cannot load, retrieval falls back to a pure-C# SIMD brute-force scan over the same stored vectors. If no index has been built at all, it falls back to lexical search alone.
+        If the native vec0 extension cannot load, retrieval falls back to a pure-C# SIMD brute-force scan over the same stored vectors. If no index has been built at all, `get_context` still ranks the files it was given, lexically, while `search_code` reports the empty index as an error.
 
         Each rung gives up ranking quality. First the SQL-level KNN convenience, then semantic ranking entirely.
 
-        But never correctness. Every rung still returns real, current results.
+        But never correctness. Every rung still returns real, current results, or says plainly that it has none. `search_code`'s error is deliberate: an empty result would read as "this code does not exist", and a fallback that looks like an answer is worse than an error.
 
         That is the degradation-ladder property from Part 2. Fallbacks degrade quality gracefully, never safety or truthfulness.
 

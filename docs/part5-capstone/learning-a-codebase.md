@@ -71,7 +71,7 @@ Pick one representative operation and follow it through every layer. From the mo
 
 This beats reading modules one at a time, for the same reason [retrieval](../part2-context/rag-for-code.md) beats pasting whole files. A trace ranks code by relevance to a real execution path. And layers that looked opaque in isolation explain each other when you watch them hand off.
 
-For Sankshep, that trace is already written. [The whole picture](architecture.md) follows a single `get_context` call from client configuration through path resolution, verify-on-read, parsing, transforms, ranking, and packing, to the savings report on stdout.
+For Sankshep, that trace is already written. [The whole picture](architecture.md) follows a single `get_context` call from client configuration through path resolution, ranking, parsing and transforms in rank order until the budget fills, and packing, to the savings report on stdout.
 
 Notice what it forces you to learn in passing. The [transport](../part3-mcp/transports.md), the [wire protocol](../part3-mcp/wire-protocol.md), and the internal pipeline — in their real order.
 
@@ -89,7 +89,7 @@ Sankshep has two you have already met.
 
 And a build-time test over the composer's reference closure guarantees that no model client can enter the prompt-composition path, per ADR-0013. That is the "a prompt, not an answer" promise, made structural.
 
-The eval regression gate plays the same role for quality claims, as [Measure what you ship](case-measure-what-you-ship.md) shows.
+The eval regression gate plays a similar role for quality claims, as [Measure what you ship](case-measure-what-you-ship.md) shows — with one difference worth noticing. A judged run costs API calls, so the gate runs when the maintainer runs the benchmark, on demand, not on every build. It still fails closed: the run exits non-zero when recall regresses.
 
 When you find such a test, you have found a load-bearing wall.
 
@@ -106,7 +106,7 @@ Facts are small and precise, so plain text and substring search are enough. That
 ```text
 [architecture] Core is BCL-only; the MCP SDK appears only in Server.   (ADR-0004)
 [behavior]     search_code refreshes first: mtime scan, then hash diff. (ADR-0006)
-[limit]        Python and Ruby have no bodies.scm — no body collapse.   (docs)
+[limit]        Python and Ruby keep their bodies — no body collapse.   (docs)
 ```
 
 The source column is the discipline that matters.

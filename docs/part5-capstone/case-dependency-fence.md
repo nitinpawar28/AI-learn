@@ -10,7 +10,7 @@ By the end you will be able to defend a [dependency fence](../part3-mcp/writing-
 
 ## The context
 
-Sankshep v3.0.0 is a .NET 10 MCP server with a small protocol surface — eight [tools, one prompt, and one resource](../part3-mcp/primitives.md) — and a large domain underneath it.
+Sankshep is a .NET 10 MCP server with a small protocol surface — eight [tools, one prompt, and one resource](../part3-mcp/primitives.md) — and a large domain underneath it.
 
 That domain holds [structural minimization](../part2-context/structural-minimization.md), [retrieval](../part2-context/rag-for-code.md), [persistent memory](../part2-context/persistent-memory.md), a deterministic [composer engine](../part4-agents/grounded-prompting.md), and an [eval harness](../part2-context/measuring-quality.md).
 
@@ -20,11 +20,11 @@ The protocol layer, by contrast, sits on moving ground.
 
 MCP itself keeps shipping revisions, and [What problem MCP solves](../part3-mcp/why-mcp.md) tracks the dated status. The official C# SDK moves with it.
 
-As of 2026-09-20, the SDK's 2.x line is GA and has already moved twice more, to 2.1.0 and 2.2.0. The fence is what makes that a one-project migration each time — see [writing a server](../part3-mcp/writing-a-server.md), which owns this fact.
+As of 2026-10-08, the SDK's 2.x line is GA and has already moved twice more. The fence is what made Sankshep's move to it a one-project migration — see [writing a server](../part3-mcp/writing-a-server.md), which owns this fact.
 
-[Writing an MCP server](../part3-mcp/writing-a-server.md) owns the dated version details. What matters here is the shape of the fact: a major-version migration is not hypothetical for this dependency. It is pre-announced.
+[Writing an MCP server](../part3-mcp/writing-a-server.md) owns the dated version details. What matters here is the shape of the fact: a major-version migration is not hypothetical for this dependency. It has already happened once.
 
-So the question ADR-0004 answers is concrete. When SDK 2.0 lands with breaking changes, how many projects have to change?
+So the question ADR-0004 answers is concrete. When a major SDK release lands with breaking changes, how many projects have to change?
 
 ## The decision
 
@@ -124,13 +124,13 @@ The fence is not free, and an honest defense names its costs.
 
 Against that, the benefits. Each is traceable to a fact on this page.
 
-SDK 2.0 arrives as a one-project migration instead of a rewrite. The domain is unit-testable as plain functions, with no client or subprocess in sight. And the eval harness can sit outside the process boundary, measuring the shipped artifact rather than a library import.
+The move to SDK 2.x was a one-project migration instead of a rewrite. The domain is unit-testable as plain functions, with no client or subprocess in sight. And the eval harness can sit outside the process boundary, measuring the shipped artifact rather than a library import.
 
 ## What would change it
 
 - **A server small enough to be all edge.** In a 100-line notes server — the kind you will build in [Build your own MCP server](../part6-reference/build-your-own.md) — the handlers *are* the program. A fence around nothing is ceremony. Skip it until there is a domain worth protecting.
 - **A server that is pure protocol adaptation.** A thin proxy reshaping requests for an existing API has no protocol-free domain to fence off. The pattern needs a substrate.
-- **A frozen dependency.** If the SDK and the protocol reached a years-stable plateau, the fence's expected payoff would shrink toward zero. As of 2026-07-18 the opposite is true. The 2.0 preview coexisting with stable 1.4.1 is the strongest available evidence that the churn this fence guards against is live.
+- **A frozen dependency.** If the SDK and the protocol reached a years-stable plateau, the fence's expected payoff would shrink toward zero. As of 2026-10-08 the opposite holds: the SDK's 2.x line went GA and shipped two more minor releases within weeks — [Writing an MCP server](../part3-mcp/writing-a-server.md) keeps the dated details — so the churn this fence guards against is live.
 
 What would *not* change it: team size.
 
