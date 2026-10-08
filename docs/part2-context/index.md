@@ -41,4 +41,4 @@ This part leans on Part 1's vocabulary. [Tokens](../part1-fundamentals/tokens.md
 Read the chapters in order. Each response builds on the one before it, and measurement judges them all.
 
 !!! example "In the wild: Sankshep"
-    These four responses are not academic categories. Sankshep, the production server from [the running example](../part0-orientation/running-example.md), ships each one as a real subsystem: retrieval, minimization, memory, and an eval harness for measurement. Part 5 revisits every design decision behind them.
+    These four responses are not academic categories. Sankshep, the production server from [the running example](../part0-orientation/running-example.md), builds each one as a real subsystem: retrieval, minimization, memory, and measurement — token accounting inside the shipped server, plus an eval harness its maintainer runs to score recall. Part 5 revisits every design decision behind them.

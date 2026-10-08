@@ -152,8 +152,6 @@ with file:line locators"])
     BLEND --> RANK
 ```
 
-*Sankshep uses 60% semantic and 40% lexical when a vector index exists. It falls back to lexical alone when there is none.*
-
 ## Reranking: a second, slower opinion
 
 Hybrid ranking has a structural weakness that no blend weight can fix.
@@ -244,14 +242,14 @@ A retrieval tool whose lexical fallback works before anyone has run an indexing 
 
 ## In practice: Sankshep
 
-Sankshep's `search_code` tool implements this pipeline end to end, and its choices map one to one onto this chapter.
+Sankshep splits this pipeline across its tools, and its choices map closely onto this chapter. `index_repo` chunks and embeds a repository into a local vector index, and `search_code` answers queries from that index. `get_context` reads the files under the paths you name straight from disk, ranks them, minimizes them, and packs them into a token budget.
 
-- *Chunking* is AST symbol-aware. A type up to 400 lines becomes a single chunk, and oversized types are split by member.
+- *Chunking* of source code is AST symbol-aware, with a size limit set by what the embedding model can actually read rather than by line count. A type too large for that is split by member, and anything still too large is split into overlapping windows. That rule replaced a 400-line limit in 2.0.0. The embedding model reads only the first 512 tokens of a chunk, so a 400-line class had been indexed by a vector describing roughly its first thirty lines — the [maximum-input-length trap](../part1-fundamentals/embeddings.md#choosing-a-model), in production. Changing the rule rebuilt every index once.
 - *Chunk identity* is a SHA-256 hash of the file path plus LF-normalized content. That closes the line-ending trap by construction.
-- *Ranking* blends 0.6 semantic and 0.4 lexical when an embedding index exists, and falls back to lexical alone when it does not. The bottom rung of the ladder, shipped as a feature.
+- *Ranking* differs between the two query tools. `search_code` ranks chunks by embedding similarity alone, with no lexical blend, and it reports an empty index as an error rather than as an empty answer a model would read as "no such code". `get_context` blends 0.6 semantic and 0.4 lexical when a usable embedding index exists, and ranks lexically alone when there is none. The bottom rung of the ladder, shipped as a feature.
 - *Documents* such as `.docx` and `.pdf` flow through the same chunk-embed-index path as source code.
 
-The embedding model behind the semantic half — bge-small-en-v1.5, and its pooling details — was covered in [Embeddings and similarity](../part1-fundamentals/embeddings.md). And `search_code` refreshes its view of changed files before searching, which is the verify-on-read pattern examined in [Part 5](../part5-capstone/case-verify-on-read.md).
+The embedding model behind the semantic lane — bge-small-en-v1.5, and its pooling details — was covered in [Embeddings and similarity](../part1-fundamentals/embeddings.md). And before it searches, `search_code` re-indexes the already-indexed files that changed and prunes deleted ones, which is the verify-on-read pattern examined in [Part 5](../part5-capstone/case-verify-on-read.md). By default, a file added since the last index stays invisible to search until `index_repo` runs again. In 4.0.0, built but not yet published as of 2026-10-08, that refresh is [capped at 25 changed files per search](../part5-capstone/case-verify-on-read.md#what-would-change-it), with the result counting any it left stale.
 
 ## Checkpoints
 

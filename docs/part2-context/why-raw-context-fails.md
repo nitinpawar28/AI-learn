@@ -131,9 +131,9 @@ for the model"])
 
 [Sankshep](../part0-orientation/running-example.md) is a whole MCP server built as an answer to this one chapter. Its tagline is the thesis stated as a product: *"Maximum context, minimum tokens — with the benchmarks to prove it."*
 
-The 37,000-token file in the worked example is real. It is the largest file in the benchmark corpus published in Sankshep's `docs/benchmarks.md`, with numbers verified 2026-07-18.
+The 37,000-token file in the worked example is real. It is the largest file in the benchmark corpus on Sankshep's [public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/).
 
-On that file, structural minimization removed 35–37% of the tokens while an LLM judge scored key-point recall at 1.00. Every key fact survived. For the questions asked, roughly a third of the file was noise, and removing it cost nothing measurable. [Measuring context quality](measuring-quality.md) unpacks how that judgment works, and where it breaks down.
+That benchmark tests this chapter's claim directly: how many tokens curation can remove before the answers suffer. [Measuring context quality](measuring-quality.md) reads its numbers, explains how the judgment behind them works, and shows where it breaks down.
 
 One thing worth planting now. Once you build curation machinery, the temptation is to report flattering savings.
 

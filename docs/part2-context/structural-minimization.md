@@ -167,31 +167,41 @@ What matters is how much *meaning* survives, and that has to be measured rather 
 
 Sankshep's minimizer is a production version of exactly this design.
 
-As of v3.0.0 it parses 12 languages — C#, JavaScript, TypeScript, TSX, Python, Go, Java, C, C++, Rust, PHP, Ruby — through tree-sitter, with per-language `.scm` queries. Choosing tree-sitter's breadth over Roslyn's C#-only semantic depth is ADR-0003, unpacked in a capstone [case study](../part5-capstone/case-tree-sitter-vs-roslyn.md).
+It parses [eleven languages](https://nitinpawar28.github.io/sankshep-docs/usage/#supported-languages) — C#, JavaScript, TypeScript, Python, Go, Java, C, C++, Rust, PHP, Ruby — through twelve tree-sitter grammars (TypeScript's `.tsx` files get their own), with per-language `.scm` queries. Choosing tree-sitter's breadth over Roslyn's C#-only semantic depth is ADR-0003, unpacked in a capstone [case study](../part5-capstone/case-tree-sitter-vs-roslyn.md).
 
 The per-request pipeline:
 
 ```mermaid
 flowchart LR
-    A["Resolve paths<br/>(anchored to repo root)"] --> P1["Parse<br/>(tree-sitter AST)"]
-    P1 -. "unsupported language" .-> PASS["Pass through<br/>unchanged"]
-    P1 --> T1["CommentStrip"] --> R1["Re-parse"] --> T2["BodyCollapse<br/>(query-targeted)"] --> R2["Re-parse"] --> T3["UnusedUsings<br/>(Aggressive only)"] --> T4["WhitespaceNormalize"]
-    T4 --> RK["Rank<br/>(0.6 semantic + 0.4 lexical)"]
-    PASS --> RK
-    RK --> PK["Greedy budget packing<br/>(locator headers counted)"]
+    A["Resolve paths<br/>(anchored to repo root)"] --> RK["Rank before minimizing<br/>(lexical over the original text,<br/>+ semantic from the index when usable)"]
+    A -. "language it does not parse" .-> SKIP["Skipped<br/>(not minimized, not packed)"]
+    RK --> MIN["Minimize the next files<br/>in rank order<br/>(parse + the level's transforms)"]
+    MIN --> PK["Greedy budget packing<br/>(locator headers counted)"]
+    PK -. "budget not yet full" .-> MIN
     PK --> REP["Savings report"]
 ```
 
+*Rank first, before anything is minimized. Then minimize in rank order, only as far down as the budget reaches.*
+
 Details worth stealing:
 
-- **Four transforms, three levels.** CommentStrip always runs, and Conservative keeps doc comments. BodyCollapse varies by level: Conservative collapses nothing, Balanced collapses only bodies with no query match, Aggressive collapses all non-matching bodies including expression-bodied members. UnusedUsings is an Aggressive-only heuristic. WhitespaceNormalize protects string literals.
-- **Re-parse between transforms.** Text edits invalidate every node offset in the old tree. So the pipeline re-parses rather than juggling stale spans.
-- **Pass through, never throw.** A file in an unsupported language goes through unchanged. The request never fails because a grammar is missing.
+- **Four transforms, three levels.** CommentStrip always runs, and Conservative keeps doc comments. BodyCollapse varies by level: Conservative collapses nothing, Balanced collapses only bodies with no query match, Aggressive collapses every body — the ones that match the query included — plus expression-bodied members. UnusedUsings is an Aggressive-only heuristic. WhitespaceNormalize protects string literals.
+- **Re-parse after an edit.** Text edits invalidate every node offset in the old tree. So after a transform changes the text, the pipeline re-parses rather than juggling stale spans.
+- **Degrade, never throw.** A grammar that fails to load costs compression, not the request: that language's files go out unminimized. A file in a language Sankshep does not parse at all is skipped, not sent raw, as its [How it works](https://nitinpawar28.github.io/sankshep-docs/how-it-works/#7-why-this-design-saves-tokens) page says of HTML and SCSS.
 - **Published gaps.** Python and Ruby have no `bodies.scm`, so body collapse is skipped for them. That is a documented limitation, not a silent one.
 - **Honest budgets.** Every packed file gets a `// path:start-end` locator header, and it counts *against* the token budget. Anything delivered to the model costs window space.
 - **The stemming invariant, deployed.** Keywords drop stopwords and words under three characters, then strip one English suffix, longest first, with a minimum stem length of four. That is the prefix-plus-substring design above. "How does login validate" keeps `ValidateRequest` intact at Balanced.
 
-The payoff is measured, not claimed. Sankshep's published benchmarks in `docs/benchmarks.md` report Balanced holding 0.94 key-point recall while removing 30.4% of the original tokens. How a number like that gets produced is the [next chapter](measuring-quality.md).
+!!! warning "Evolving — verified 2026-10-08"
+    Sankshep 4.0.0 is built but not yet published as of 2026-10-08. Among the changes its changelog records, three alter how `get_context` packs and labels code:
+
+    - **A file that does not fit arrives as its declarations.** 3.0.0 can only cut such a file at a line boundary, by position rather than relevance, or withhold it. 4.0.0 cuts it at its types and methods instead, and the ones the query is about go first, across every ranked file. Each piece carries a `// path:start-end Symbol` locator (`#` in Python and Ruby, as the last item says), and a `PARTIAL` header line names the files that came back in part. A file that fits whole comes back exactly as before. No benchmark has measured the benefit yet.
+    - **The header fits inside the budget.** The WARNING, NOTE and WITHHELD header lines name only as many paths as fit and count the rest, so the whole response fits `tokenBudget`. On 3.0.0 those lines are added on top of the budget, so a call that fills it comes back 120–150 tokens over.
+    - **Python and Ruby locators are `#` comments.** A `//` line reads as code in those languages.
+
+    Publication will change this box. Check Sankshep's [public changelog](https://nitinpawar28.github.io/sankshep-docs/changelog/) for a 4.0.0 entry.
+
+The payoff is measured, not claimed. Sankshep publishes key-point recall against compression for every level on its [public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/), and the [next chapter](measuring-quality.md) reads those numbers and shows how they are produced.
 
 !!! failure "Common misconception"
     *"Minimization and summarization are two words for the same thing."*
@@ -229,9 +239,9 @@ The payoff is measured, not claimed. Sankshep's published benchmarks in `docs/be
 3. A file arrives in a language your minimizer has no grammar for. What should happen, and what is the general principle?
 
     ??? success "Answer"
-        Pass it through unchanged rather than erroring.
+        Never fail the request over it. Either pass the file through unchanged, which costs compression, or leave it out and say so, which keeps the budget for code you can minimize. [In practice](#in-practice-sankshep) shows one production minimizer doing each, for two different ways a grammar can be missing.
 
-        The principle: degrade *quality* gracefully. A missing grammar means one uncompressed file, and therefore a worse ratio. It does not mean a broken request.
+        The principle: degrade *quality* gracefully. A missing grammar costs one uncompressed file, or one file left out. It does not mean a broken request.
 
 4. State the stemming invariant, and explain why it guarantees stemming can only add matches.
 
