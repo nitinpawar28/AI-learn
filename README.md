@@ -4,7 +4,7 @@ A practical, diagram-heavy curriculum: **LLMs → embeddings & retrieval → the
 
 📖 **Read the site: <https://nitinpawar28.github.io/AI-learn/>**
 
-AI-learn teaches modern AI engineering progressively, from "what is a token?" to "I understand how and why a production MCP server is built the way it is." Every concept is taught generically first, then grounded in a real system: [Sankshep](https://github.com/nitinpawar28), a C#/.NET token-minimizing, memory-augmented codebase-context MCP server, appears throughout as a recurring, conceptual case study. Every mechanism gets a Mermaid diagram; every chapter ends with checkpoints; fast-moving facts are web-verified and dated.
+AI-learn teaches modern AI engineering progressively, from "what is a token?" to "I understand how and why a production MCP server is built the way it is." Every concept is taught generically first, then grounded in a real system: [Sankshep](https://nitinpawar28.github.io/sankshep-docs/), a C#/.NET token-minimizing, memory-augmented codebase-context MCP server, appears throughout as a recurring, conceptual case study. Every mechanism gets a Mermaid diagram; every chapter ends with checkpoints; fast-moving facts are web-verified and dated.
 
 ## Curriculum
 
@@ -55,7 +55,7 @@ Three things the print pipeline has to fix, which a naive "print to PDF" gets wr
 
 Pushing to `main` triggers a GitHub Actions workflow that builds the site with `mkdocs build --strict` and deploys it via the native GitHub Pages artifact flow (Pages source: "GitHub Actions").
 
-> **Tooling note (as of 2026-07-18):** this site is built on mkdocs-material 9.7.x, which entered maintenance mode in November 2025 (its successor, "Zensical," is in development; patches are expected through roughly November 2026). The version is pinned in `requirements.txt`.
+> **Tooling note (as of 2026-10-08):** this site is built on mkdocs-material 9.7.x, which entered maintenance mode in November 2025 (its successor, "Zensical," is in development; patches are expected through roughly November 2026). The version is pinned in `requirements.txt`. The pinned 9.7.7 requires MkDocs below 2.0, so the MkDocs 2.0 warning every build prints is informational.
 
 ## Custom domain (optional)
 
