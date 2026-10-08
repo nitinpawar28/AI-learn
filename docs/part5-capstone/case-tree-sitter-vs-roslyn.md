@@ -35,14 +35,14 @@ As [Structural minimization](../part2-context/structural-minimization.md) showed
 
 ADR-0003: parse everything with tree-sitter.
 
-One framework, twelve grammars. As of v3.0.0, Sankshep parses C#, JavaScript, TypeScript, TSX, Python, Go, Java, C, C++, Rust, PHP, and Ruby. Each has a `.scm` query file telling the transforms what to look for.
+One framework, twelve grammars for eleven languages: TypeScript's `.tsx` files get a grammar of their own. [Structural minimization](../part2-context/structural-minimization.md) keeps the list. Each language has `.scm` query files telling the transforms what to look for.
 
 The operational details carry most of the reliability story.
 
 - **Grammars ship bundled** in the package the Minimizer already depends on. No runtime downloads, nothing to fetch on first use.
 - **Lazy loading.** A grammar loads the first time a file of its language is actually parsed. A C#-only repository never pays for the Ruby grammar.
-- **Per-language failure isolation.** A grammar that fails to load takes down only its own language. Files in that language pass through unminimized — the graceful pass-through taught in [Structural minimization](../part2-context/structural-minimization.md) — while the other ten keep working.
-- **The mapping is split across the fence.** File extension to language id lives in `LanguageMap`, inside the BCL-only Core project. Language id to grammar binding lives in the Minimizer adapter, which is where you learn that tree-sitter spells C# as `"c-sharp"`. The third-party parser dependency never touches Core, following the same discipline as [the dependency fence](case-dependency-fence.md).
+- **Per-language failure isolation.** A grammar that fails to load takes down only its own language. Files in that language pass through unminimized — the graceful degradation taught in [Structural minimization](../part2-context/structural-minimization.md) — while the other ten languages keep working.
+- **The mapping is split across the fence.** File extension to language id is mapped inside the BCL-only Core project. Language id to grammar binding lives in the Minimizer adapter, which is where you learn that tree-sitter spells C# as `"c-sharp"`. The third-party parser dependency never touches Core, following the same discipline as [the dependency fence](case-dependency-fence.md).
 
 ## The alternative: Roslyn
 
@@ -58,7 +58,7 @@ It covers exactly one of the eleven languages Sankshep promises.
 flowchart TB
     subgraph ts["Chosen — tree-sitter: breadth, syntactic"]
         direction LR
-        A1["Working-tree file<br/>any of 12 languages"] --> A2["tree-sitter parse<br/>(error-tolerant)"]
+        A1["Working-tree file<br/>any of 11 languages"] --> A2["tree-sitter parse<br/>(error-tolerant)"]
         A2 --> A3["Per-language<br/>.scm queries"]
         A3 --> A4["Syntactic transforms<br/>(comments, bodies,<br/>whitespace)"]
         A4 --> A5["Minimized code —<br/>known gaps published"]
@@ -82,7 +82,7 @@ That is not one decision. It is ten more of them, forever.
 
 | Axis | tree-sitter (chosen) | Roslyn |
 |---|---|---|
-| Language coverage | 12 languages, one framework | C# (and Visual Basic) — one of the 11 |
+| Language coverage | 11 languages, 12 grammars, one framework | C# (and Visual Basic) — one of the 11 |
 | Analysis depth | syntactic: the tree's shape | semantic: symbols, references, types |
 | Broken working-tree input | error-tolerant by design | also recovers well — it powers IDE tooling |
 | Unused-import removal | heuristic | exact — the compiler reports real usage |
@@ -96,7 +96,7 @@ What the syntactic choice costs, concretely:
 
 And what it buys, measured rather than asserted.
 
-This syntactic-only pipeline is the one behind the published numbers in Sankshep's `docs/benchmarks.md`. Balanced holds 0.94 key-point recall while removing 30.4% of tokens, produced by the harness described in [Measuring context quality](../part2-context/measuring-quality.md).
+This syntactic-only pipeline is the one Sankshep's [public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/) measures. [Measuring context quality](../part2-context/measuring-quality.md) describes the harness and keeps the figures. The benchmark's own list of limitations attributes the misses that survive every level to retrieval — facts in files the ranker did not choose, or in the part of a chosen file the budget cut — not to minimization.
 
 Depth was not the bottleneck the benchmarks found.
 
@@ -109,14 +109,14 @@ A decision this deliberate comes with its own reversal condition. ADR-0003's has
 
 Note the shape of clause 2. The flip condition is *measurable*.
 
-The same benchmark harness that justified the decision, described in [Case study: measure what you ship](case-measure-what-you-ship.md), is standing by to falsify it. As of 2026-07-18, it has not.
+The same benchmark harness that justified the decision, described in [Case study: measure what you ship](case-measure-what-you-ship.md), is standing by to falsify it. As of the 2026-09-20 measurement, it has not.
 
 ## The transferable lesson
 
 !!! tip "Transferable lesson"
     When the product's promise is breadth, pick the tool whose coverage matches the promise. Then turn its gaps into documentation instead of surprises.
 
-    Breadth-with-known-gaps beats depth-in-one-corner, because a user can plan around a published limitation but not around nine unsupported languages.
+    Breadth-with-known-gaps beats depth-in-one-corner, because a user can plan around a published limitation but not around ten unsupported languages.
 
     The corollary is a duty. Every gap the choice creates — a heuristic where an exact answer was possible, a language without body collapse — must be written down, fenced into the tier that already admits lossiness, or made to fail soft.
 
@@ -151,7 +151,7 @@ The same benchmark harness that justified the decision, described in [Case study
 
         Semantic needs alone do not justify it. With eleven promised languages, Roslyn still covers one, so the coverage gap remains.
 
-        A C#-only scope alone does not justify it either. If the syntactic pipeline's measured recall already holds — 0.94 at Balanced, per `docs/benchmarks.md` — depth buys nothing you can demonstrate.
+        A C#-only scope alone does not justify it either. If the syntactic pipeline's measured losses are not ones semantics would fix — and the published benchmark traces the misses that survive every level to retrieval, not minimization — depth buys nothing you can demonstrate.
 
         Only together do the clauses make Roslyn both *sufficient* for the promise and *necessary* for the quality.
 

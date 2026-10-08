@@ -12,7 +12,7 @@ Sankshep's retrieval pipeline uses vectors in two places.
 
 At index time, `index_repo` embeds AST-aware chunks of the repository. [Retrieval for code](../part2-context/rag-for-code.md) covers the chunking.
 
-At query time, `search_code` and the ranking stage inside `get_context` blend scores at 0.6 semantic to 0.4 lexical. That semantic 0.6 is entirely the embedding model's work.
+At query time, `search_code` ranks by embedding similarity alone, and the ranking stage inside `get_context` [blends scores at 0.6 semantic to 0.4 lexical](../part2-context/rag-for-code.md#in-practice-sankshep) when an embedding index exists. So the embedding model does all of `search_code`'s ranking and, when there is an index, 0.6 of `get_context`'s.
 
 These are [tools](../part3-mcp/primitives.md) an agent calls dozens of times per session. So whatever produces the vectors runs constantly.
 
@@ -30,7 +30,7 @@ ADR-0005: run bge-small-en-v1.5 locally through ONNX Runtime on CPU. No API, no 
 
 The configuration reads like a checklist of the [four settings that break embedding pipelines silently](../part1-fundamentals/embeddings.md#four-details-that-break-pipelines-silently). 384 dimensions. CLS pooling, not mean. L2-normalized vectors. And the asymmetric query prefix `"Represent this sentence for searching relevant passages: "`, applied to queries only.
 
-The ONNX session loads lazily on first use, and index-time embedding runs in batches of 16. The resulting vectors land in sqlite-vec — itself a deliberate-modesty decision, argued in [Case study: sqlite-vec over a vector DB](case-sqlite-vec-vs-vector-db.md).
+The ONNX session loads lazily on first use, and index-time embedding is batched. The resulting vectors land in sqlite-vec — itself a deliberate-modesty decision, argued in [Case study: sqlite-vec over a vector DB](case-sqlite-vec-vs-vector-db.md).
 
 One consequence deserves its own paragraph. The model download is the system's single hash-verified network egress.
 
@@ -94,7 +94,7 @@ bge-small-en-v1.5 is a good small model. It is not the best model, and no amount
 
 Two things bound the damage.
 
-First, embeddings carry only 0.6 of the ranking weight. The 0.4 lexical component catches exactly the cases vectors blur, because identifiers are lexical gold — a query containing "validate" finds `ValidateRequest` with no semantics required.
+First, in `get_context`'s ranking, embeddings carry only 0.6 of the weight. The 0.4 lexical component catches exactly the cases vectors blur, because identifiers are lexical gold — a query containing "validate" finds `ValidateRequest` with no semantics required. `search_code` has no such cushion: it ranks by embeddings alone, so a weaker model would show there first.
 
 Second, the ceiling is watched rather than assumed. Which is what the next section is about.
 
@@ -104,15 +104,17 @@ A decision like this rots when the flip condition lives in someone's head.
 
 ADR-0005's flip condition is written down and measurable. Swap the model when evals show retrieval is the bottleneck.
 
-The instrumentation already exists. The keypoint-recall harness from [Measuring context quality](../part2-context/measuring-quality.md) judges whether delivered context still answers real questions, driving the shipped binary end to end. See [Case study: measure what you ship](case-measure-what-you-ship.md).
+The instrumentation already exists. The key-point recall harness from [Measuring context quality](../part2-context/measuring-quality.md) judges whether delivered context still answers real questions, driving the shipped binary end to end. See [Case study: measure what you ship](case-measure-what-you-ship.md).
 
 If judged misses started tracing back to retrieval — the right chunks never surfaced, rather than surfacing and being over-compressed — the embedding model would be the limiting factor, and the review reopens.
 
-**As of 2026-09-20 the condition has started to trigger, which is the most useful thing a written flip condition can do.** The re-measured suite reports Balanced at 0.67 recall and 59.5% compression — and, more to the point, the misses now have a traceable shape. Of 19 facts missed at Balanced, 13 had no defining code delivered at all: the answer was never sent, rather than sent and over-compressed. Several questions score identically at Conservative and Balanced, which no amount of minimization explains, because Conservative keeps every body.
+**As of 2026-09-20 the condition has started to trigger, which is the most useful thing a written flip condition can do.** The suite re-measured that day — its numbers and the judge's error bar are on [Measuring context quality](../part2-context/measuring-quality.md) — shows more than a recall score: the misses now have a traceable shape. The facts no level recovers sat in files the ranker did not choose, or in the part of a chosen file the budget cut, as the [public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/) puts it. The answer was never sent, rather than sent and over-compressed. Several questions score identically at Conservative and Balanced, which no amount of minimization explains, because Conservative keeps every body.
 
 That is the retrieval bottleneck the ADR names. It is not yet a decision to swap the model — the same evidence also points at ranking and at chunk budgets, which are cheaper to change and were changed first — but it is exactly the signal the condition was written to catch, and the review is open rather than closed.
 
-Note what made the signal legible: the harness reports *which* chunks it withheld to fit a budget. A recall number alone would have said quality was mediocre; the withheld count says where to look.
+Note what made the signal legible: every excerpt `get_context` delivers is headed by a locator naming its file and lines, and the harness sees exactly what a client sees. So each missed fact could be checked against the code that actually arrived. A recall number alone would have said quality was mediocre; the locators say where to look.
+
+In 4.0.0 — built, not yet published as of 2026-10-08 — Sankshep takes the cheaper route again. A file that does not fit what is left of the token budget is [delivered by its declarations](../part2-context/structural-minimization.md#in-practice-sankshep), with the ones the query is about first across every ranked file, so one large file no longer spends the whole budget on members nobody asked about. That aims at both kinds of miss above: what comes back from a large file is now chosen by the query rather than by position, and the budget it no longer spends can reach the relevant members of files ranked below it. Whether it recovers those facts has not been measured yet, so the model-swap review stays open.
 
 Anyone who does pull the trigger inherits a known checklist, straight from the [four silent footguns](../part1-fundamentals/embeddings.md#four-details-that-break-pipelines-silently).
 
@@ -136,7 +138,7 @@ The swap is contained — vectors in, vectors out. But it is a migration, not a 
     ??? success "Answer"
         Quality is one axis among several, and the binding constraints here are structural. Private code must not leave the machine. Queries must cost nothing at the margin. And the tool must work air-gapped. A hosted API fails all three by construction.
 
-        The quality gap is bounded in practice by hybrid ranking, since the 0.4 lexical weight catches identifier matches that vectors blur. And it is monitored by recall evals rather than assumed away.
+        The quality gap is bounded in practice by hybrid ranking in `get_context`, where the 0.4 lexical weight catches identifier matches that vectors blur. `search_code` ranks by embeddings alone, so a weaker model shows there first. And the gap is monitored by recall evals rather than assumed away.
 
         If those evals ever show retrieval is the bottleneck, the decision reverses on evidence. The choice is modest, not dogmatic.
 

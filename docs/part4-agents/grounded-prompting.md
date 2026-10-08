@@ -68,8 +68,8 @@ Grounding does not replace the [prompt templates](../part1-fundamentals/promptin
 
 They compose rather than compete. A template's slots are exactly where a grounding tool's output belongs, and some template formats can invoke such tools directly.
 
-!!! warning "Evolving — verified 2026-07-18"
-    VS Code's Copilot prompt files, `.prompt.md`, accept a `tools:` frontmatter key that can name MCP tools. So a versioned author-time template can call a request-time grounding tool by name. This changes quickly; check the [VS Code Copilot customization docs](https://code.visualstudio.com/docs/copilot/copilot-customization) for current values.
+!!! warning "Evolving — verified 2026-10-08"
+    VS Code's Copilot prompt files, `.prompt.md`, accept a `tools:` frontmatter key that can name MCP tools. So a versioned author-time template can call a request-time grounding tool by name. As of 2026-10-08, though, VS Code has deprecated prompt files for its Agent Host sessions and steers users to agent skills, whose documented frontmatter lists no `tools:` key. Prompt files still work with the Local agent, which VS Code says will be removed in a future release. This changes quickly; check the [VS Code prompt files docs](https://code.visualstudio.com/docs/agent-customization/prompt-files) for current values.
 
 ```mermaid
 flowchart TB
@@ -102,7 +102,7 @@ The division exists for the maintainers. Template changes get code review. Groun
 
 Sankshep ships this whole chapter as its single MCP prompt, `compose_task_prompt`. That is the user-invoked primitive from [tools, resources, and prompts](../part3-mcp/primitives.md).
 
-The request carries a task and a token budget, defaulting to 4,000.
+The request carries a task, the paths to draw code from (required), and a token budget defaulting to 4,000.
 
 That budget bounds the **code**. Remembered conventions are additive, on a separate budget of 600 tokens, so the prompt you get back is deliberately larger than the number you asked for. It runs [retrieval](../part2-context/rag-for-code.md) and the [minimizer](../part2-context/structural-minimization.md) at the Balanced level, using the task text as the collapse query. It pulls conventions from [memory](../part2-context/persistent-memory.md) wholesale by category, scoped to the current branch plus global entries, deduplicated.
 
@@ -110,7 +110,7 @@ Finally it renders four sections in a fixed order: `# Task`, `# Relevant code (m
 
 ```mermaid
 flowchart TB
-    IN["Request: task text +<br/>token budget (default 4,000)"]
+    IN["Request: task text + paths +<br/>token budget (default 4,000)"]
     SPLIT["Budget bounds the code (4,000)<br/>conventions additive (600)"]
     CODE["Retrieval + minimizer at Balanced,<br/>task text as the collapse query"]
     CONV["Memory: conventions fetched by category,<br/>current branch + global, deduplicated"]

@@ -24,7 +24,7 @@ Each failure mode had a decision point in Sankshep's history, recorded in an ADR
 
 ## The decision
 
-As of 2026-07-18, at v1.8.0, three commitments define how Sankshep measures itself.
+Three commitments define how Sankshep measures itself.
 
 **Evals drive the shipped binary, per ADR-0008.**
 
@@ -38,16 +38,16 @@ flowchart TB
     H -->|"spawns"| B["Shipped server binary<br/>subprocess · JSON-RPC over stdio"]
     B -->|"delivered text blocks —<br/>what a real client receives"| H
     H -. "shortcut not taken:<br/>import internals as a library" .-x LIB["In-process function calls<br/>— an artifact nobody ships"]
-    H --> J["Judge model + pinned rubric<br/>binary per-fact labels,<br/>verbosity guard"]
+    H --> J["Judge model<br/>one label per atomic fact"]
     J --> R["Report:<br/>recall @ compression,<br/>honest denominators only"]
-    R --> G{"CI regression gate"}
-    G -->|"holds baseline"| OK["Merge"]
-    G -->|"drops below baseline"| NO["Build fails — closed"]
+    R --> G{"Regression gate<br/>maintainer-run, on demand"}
+    G -->|"holds"| OK["Run passes"]
+    G -->|"regresses"| NO["Run exits non-zero — closed"]
 ```
 
 **Honest denominators, per ADR-0017.**
 
-Savings reports compare compressed output against the delivered files only. Never against everything-in-scope divided by budget — a ratio that inflates with repository size while measuring nothing.
+Savings reports compare compressed output against the delivered files only. Never against everything-in-scope divided by budget — a ratio that inflates with repository size while measuring nothing. [Measuring context quality](../part2-context/measuring-quality.md#in-practice-sankshep) has the exact rule, including how a file cut to fit the budget is credited.
 
 Dollar figures were deleted from reports outright, rather than refined. Token counts are measured at request time. But a dollar total needs a price, a provider, and a moment in time that the server does not possess.
 
@@ -61,9 +61,9 @@ The outcome: `get_context` returns a single plain-text content block and declare
 
 The published results follow the same discipline.
 
-Sankshep's [public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/), verified 2026-09-20, reports `keypoint-recall-v1`: 8 questions, 52 atomic facts, judged by `claude-opus-4-8` with a verbosity guard.
+Sankshep's [public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/) reports a suite measured 2026-09-20 on v3.0.0: 8 questions, 52 atomic facts, judged by `claude-opus-4-8`. [Measuring context quality](../part2-context/measuring-quality.md) owns the figures, and shows the judge alone moving recall by about 0.05 between runs of unchanged code.
 
-It includes the unflattering rows. Aggressive scores 0.10 recall at 77.5% compression — lossy by design, and printed anyway. Conservative recovers only 0.50 of these facts even though it keeps every method body, which is the least flattering number on the page and is printed first. And a composed-versus-naive comparison where naive context scored 0.96 recall against the composed prompt's 0.63, at a 32.6% token reduction.
+The public page includes the unflattering rows. Aggressive scores 0.10 recall at 77.5% compression — lossy by design, and printed anyway. Conservative recovers only 0.50 of these facts even though it keeps every method body, which is the least flattering number on the page and is printed first. And a composed-versus-naive comparison where naive context — every raw file, uncapped — scored 1.00 recall against the composed prompt's 0.66, at a 72.6% token reduction.
 
 "Roundtrips avoided" — the plausible claim that better context saves whole [loop rounds](../part4-agents/cost-efficiency.md) — is explicitly not measured. So it is not claimed.
 
@@ -80,7 +80,7 @@ The chosen path pays real costs.
 
 Subprocess evals are slower and operationally heavier than in-process calls. Process lifecycles, stdio buffering, and startup time all become the harness's problem.
 
-Honest denominators make the headline numbers smaller. 59.5% compression at 0.67 recall for Balanced, verified 2026-09-20, is a modest figure next to the "up to 90%" a scope-based denominator would justify.
+Honest denominators make the headline numbers smaller. Balanced's 59.5% compression at 0.67 recall — measured 2026-09-20 on v3.0.0, with the judge alone moving recall by about 0.05 — is a modest figure next to the "up to 90%" a scope-based denominator would justify.
 
 Deleting dollar figures removes the single most persuasive line from any report.
 
@@ -92,7 +92,7 @@ What it buys is that every remaining claim survives scrutiny.
 
 The subprocess harness doubles as an end-to-end integration test. A regression in framing or packaging fails the eval suite, even if every unit test passes.
 
-The [fail-closed](../part2-context/measuring-quality.md) gate means a fidelity regression stops the merge, rather than shipping with a warning.
+The [fail-closed](../part2-context/measuring-quality.md) gate means a fidelity regression makes the maintainer's benchmark run exit non-zero, rather than pass with a warning. A judged run costs API calls, so it runs on demand rather than on every merge.
 
 And the unflattering rows are what make the flattering ones credible. An instrument that visibly can produce bad news is an instrument, not a press release.
 
@@ -100,7 +100,7 @@ And the unflattering rows are what make the flattering ones credible. An instrum
 
 Three conditions would reopen these decisions, each on its own axis.
 
-- **Eval latency.** If the suite grew until per-commit runs became impractical, a fast in-process tier could serve the inner development loop. As an *addition*, with the shipped-binary tier remaining the merge gate. The moment the proxy tier becomes the gate, the original failure mode returns.
+- **Eval latency.** If the suite grew too slow to run while iterating on a change, a fast in-process tier could serve the inner development loop. As an *addition*, with the shipped-binary tier remaining the gate. The moment the proxy tier becomes the gate, the original failure mode returns.
 - **Measured client demand.** If a major client demonstrably consumed structured output programmatically, *and* delivered exactly one encoding to the model, then adding a structured rendering of the same result would satisfy both result-shape rules. The flip condition is measured client behavior at the window. Not a feature request.
 - **Same-universe dollars.** Dollar reporting belongs to the layer that holds prices and pays bills: the client. A client-side report multiplying measured tokens by the price it actually paid would be a legitimate measurement. Nothing about ADR-0017 forbids someone *else* computing it, where both factors live in the same universe.
 
@@ -135,7 +135,7 @@ Three conditions would reopen these decisions, each on its own axis.
 
         The fix is positional. The client layer holds real prices and pays the bill, so it can compute dollars legitimately. The server cannot.
 
-3. Sankshep publishes Aggressive's 0.10 recall, and a composed-versus-naive result where its own composed prompt loses on recall, 0.66 against 1.00. What does publishing these numbers do for the 0.94 rows?
+3. Sankshep publishes Aggressive's 0.10 recall, and a composed-versus-naive result where its own composed prompt loses on recall, 0.66 against 1.00. What does publishing these numbers do for the flattering ones, like Balanced's 0.67 at 59.5% compression?
 
     ??? success "Answer"
         It certifies the instrument.

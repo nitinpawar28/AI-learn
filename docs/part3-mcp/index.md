@@ -43,7 +43,7 @@ The rest is systems plumbing — processes, JSON, sockets — with no machine le
 When Part 3 is done, tools have a standard socket. [Part 4](../part4-agents/index.md) then supplies the loop that calls them.
 
 !!! example "In the wild: Sankshep"
-    Every mechanism in this part is one that Sankshep actually ships. Sankshep is the production server from [the running example](../part0-orientation/running-example.md).
+    Most mechanisms in this part are ones Sankshep actually ships. Sankshep is the production server from [the running example](../part0-orientation/running-example.md).
 
     It offers all three primitive kinds: tools, a prompt, and a resource. It supports both transports: stdio by default, Streamable HTTP via `--http`. And it documents client configuration for four IDEs.
 

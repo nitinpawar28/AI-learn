@@ -41,11 +41,11 @@ In Sankshep this check is always on. When `search_code` receives a query, a refr
 
 Only then does the search run. Against an index that has just been reconciled with the working tree.
 
-There is also a file watcher, behind the opt-in flag `SANKSHEP_WATCH=1`. Its job description is the heart of this case study: it is a *latency optimization only*.
+There is also a file watcher, behind the opt-in flag `SANKSHEP_WATCH=1`. Its job description is the heart of this case study: for the files already in the index, it is a *latency optimization only*.
 
 A watcher that is running lets refresh work happen ahead of the query, so the two gates find less to do when the read arrives.
 
-A watcher that is off, crashed, or missed events changes nothing about correctness. The next read's gates catch everything anyway.
+A watcher that is off, crashed, or missed events changes nothing about correctness for the files the index already holds. The next read's gates pick up any edit the watcher would have.
 
 ```mermaid
 sequenceDiagram
@@ -54,7 +54,7 @@ sequenceDiagram
     participant W as Working tree
     participant I as Index
     participant FW as Watcher (opt-in)
-    Note over FW: SANKSHEP_WATCH=1 —<br/>latency optimization only
+    Note over FW: SANKSHEP_WATCH=1 —<br/>for indexed files,<br/>latency optimization only
     FW--)T: change hints (may be absent)
     C->>T: tools/call: search_code(query)
     T->>W: gate 1 — mtime scan of indexed files
@@ -62,7 +62,7 @@ sequenceDiagram
     T->>W: gate 2 — read and hash those files
     W-->>T: content hashes
     T->>I: re-embed changed chunks, prune deleted files
-    T->>I: search (semantic + lexical)
+    T->>I: nearest-neighbor search (semantic only)
     I-->>T: results
     T-->>C: fresh results with checkable locators
 ```
@@ -88,7 +88,7 @@ Now correctness depends on the hardest component to test. Edits made before the 
 
 *Re-index everything per query.* Correct by brute force, and unusably slow past toy scale.
 
-Verify-on-read keeps the correctness of that last option at a fraction of its price. The two gates spend real work only on files that actually changed.
+Verify-on-read keeps that correctness for every indexed file at a fraction of the price. The two gates spend real work only on files that actually changed.
 
 ## Tradeoffs
 
@@ -100,9 +100,9 @@ What the design pays:
 
 What it buys:
 
-- *Correctness by construction.* Every read path passes through the gates. So there is no sequence of edits, crashes, or restarts that yields a stale answer.
+- *Correctness by construction.* Every search passes through the gates. So no crash, restart, or missed watcher event can make a search serve a stale chunk.
 - *No mandatory background machinery.* Nothing to babysit. No daemon whose death degrades correctness. No missed-event recovery protocol.
-- *Branch switches just work.* A `git switch` is not a special case to this design. It is simply many files changing mtime and content at once, plus some deletions, and the same two gates plus pruning absorb it. The absence of branch-handling code *is* the feature.
+- *Branch switches are mostly ordinary.* A `git switch` is not a special case to this design. It is simply many files changing mtime and content at once, plus some deletions, and the same two gates plus pruning absorb it. The absence of branch-handling code *is* the feature. The documented exception is files a switch *adds*: verify-on-read refreshes only files the index already holds, so new files come in when `index_repo` runs, as Sankshep's [public architecture page](https://nitinpawar28.github.io/sankshep-docs/architecture/) says.
 
 ## What would change it
 
@@ -110,12 +110,18 @@ What it buys:
 - *A shared, remote index.* Verify-on-read assumes one local working tree to verify against. An index serving many machines has no single "the disk". That is one reason ADR-0019 keeps the core local-first and single-developer in scope.
 - *A latency budget below a stat scan.* If per-query latency must undercut gate one, freshness work has to move off the read path. And staleness windows return as an explicit, documented cost, rather than an accident.
 
+**In 4.0.0 — built, not yet published as of 2026-10-08 — the last of these fired, in a form this page did not predict.** The cost that outgrew the read path was not gate one's stat scan but gate two's re-embedding: the lumpy worst case above. The release's changelog gives the reason plainly — after a branch switch, one search could spend minutes re-embedding. So in 4.0.0 `search_code` re-embeds at most 25 changed files before answering, and its result header says how many indexed files it left stale. Later searches, `index_repo`, or the opt-in watcher catch them up.
+
+That is the staleness window the last bullet anticipated, back as an explicit, documented cost. The change trades *correctness by construction* for something weaker but still honest: a bounded amount of re-embedding per search, with any staleness it leaves counted and announced in the result, never silent.
+
 !!! tip "Transferable lesson"
     Put correctness on the cheap synchronous check, and let the fancy asynchronous machinery be purely an optimization.
 
     If your watcher, cache invalidator, or event pipeline can crash without the system ever serving a stale answer, the design is right. If correctness depends on the async layer never missing an event, the design is a bet.
 
     Make the slow path correct and the fast path optional. Never the reverse.
+
+    And if the synchronous check itself grows too slow to finish on every read, bound it and announce what it left undone. Staleness the reader is told about is a cost they can price. Silent staleness is a bug.
 
 ## Checkpoints
 
@@ -135,7 +141,9 @@ What it buys:
 
         Edits made before it started, while it was down, or during dropped-event bursts become permanently invisible to search. And nothing on the read path can notice.
 
-        With verify-on-read in place, a dead watcher costs only latency, because the next read's gates reconcile everything. Removing them converts every watcher failure from a slowdown into silent wrong answers.
+        With verify-on-read in place, a dead watcher costs only latency for the files the index holds, because the next read's gates reconcile every one of them. Removing the gates converts every watcher failure from a slowdown into silent wrong answers.
+
+        In 4.0.0 — built, not yet published as of 2026-10-08 — a search re-embeds at most 25 changed files and counts the rest in its result. So after a large change, a dead watcher also means a backlog of stale files lingers until later searches or `index_repo` work it off. That is still a different class of failure: counted and announced, not silent.
 
 3. Why does a git branch switch require no special handling in this design, and what would it require in a watcher-primary or timer-based design?
 
@@ -145,6 +153,8 @@ What it buys:
         A watcher-primary design must correctly ingest a burst of thousands of events without dropping any. A timer-based design serves results from the old branch until the next tick.
 
         Verify-on-read gets the hard case free, because the hard case is indistinguishable from the normal one.
+
+        Two documented limits apply. Files the switch *adds* are not in the index yet, and verify-on-read refreshes only files the index already holds, so new files come in when `index_repo` runs. And in 4.0.0 — built, not yet published as of 2026-10-08 — a switch that changes more than 25 indexed files is caught up over several searches, or by `index_repo` or the opt-in watcher, with each result counting the stale files meanwhile.
 
 ## Try it
 

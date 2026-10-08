@@ -39,7 +39,7 @@ diagnose waste"]
 
 **agent** — An LLM run inside a loop with three additions. Tools it can request, state carried between iterations (the conversation history), and a stop condition. The client program owns the loop. The model only emits text, and the server only executes single calls. → [The agent loop](../part4-agents/agent-loop.md)
 
-**Agent mode** — The VS Code chat mode in which tool definitions are attached to model requests and the emitted tool calls are executed. A server can be configured, connected, and healthy while its tools never fire, because other chat modes never send the definitions to the model at all. → [Connecting servers to IDEs](../part3-mcp/ide-integration.md)
+**agent picker** — The control in VS Code's chat input that selects which agent handles a request, and with it which instructions and tools apply. VS Code's documentation says to select Agent to work with tools, the choice older guides call *Agent mode*. A server can be configured, connected, and healthy while its tools never fire, because the agent selected in the picker never offered them to the model. → [Connecting servers to IDEs](../part3-mcp/ide-integration.md)
 
 **Agentic AI Foundation** — The body under the Linux Foundation that has governed MCP since Anthropic donated the protocol in December 2025, with Anthropic, Block, and OpenAI as co-founders. → [What problem MCP solves](../part3-mcp/why-mcp.md)
 
@@ -97,7 +97,7 @@ diagnose waste"]
 
 ## F
 
-**feature lifecycle policy** — The MCP governance rule, adopted with revision 2026-07-28, defining three feature states — Active, Deprecated, Removed — and guaranteeing that a Deprecated feature stays in the specification for at least twelve months, with a documented migration path, before becoming eligible for removal. It makes "deprecated" mean *announced as leaving*, not *broken*. → [What problem MCP solves](../part3-mcp/why-mcp.md)
+**feature lifecycle policy** — The MCP governance rule, adopted with revision 2026-07-28, defining three feature states — Active, Deprecated, Removed — and a minimum deprecation window: a Deprecated feature stays in the specification, with a documented migration path, for at least twelve months before it becomes eligible for removal. Core Maintainers can shorten that to no less than ninety days for a feature that is an active security risk, and features deprecated before the policy existed, such as HTTP+SSE, follow transition dates of their own. It makes "deprecated" mean *announced as leaving*, not *broken*. → [What problem MCP solves](../part3-mcp/why-mcp.md)
 
 **fail-closed** — The policy that when a check fails or cannot run, the pipeline stops rather than proceeding with a warning — applied wherever safety or honesty is at stake, such as an eval regression gate. A gate that only warns is a gate everyone learns to walk around. → [Measuring context quality](../part2-context/measuring-quality.md)
 
@@ -217,7 +217,7 @@ diagnose waste"]
 
 **sampling** — The step after the forward pass that picks one token from the probability distribution. A weighted random draw, not a lookup of "the answer". It is why the same prompt can produce different outputs on different runs. → [What an LLM actually does](../part1-fundamentals/what-llms-do.md)
 
-**Sankshep** — This site's running example. A local-first MCP server written in C# on .NET 9 that retrieves, structurally compresses, remembers, and measures code context for AI coding assistants. Its source is proprietary while the binary is free (ADR-0014), and it appears on this site only in clearly marked, skippable sections. → [The running example](../part0-orientation/running-example.md)
+**Sankshep** — This site's running example. A local-first MCP server written in C# on .NET 10 that retrieves, structurally compresses, remembers, and measures code context for AI coding assistants. Its source is proprietary while the binary is free (ADR-0014), and it appears on this site only in clearly marked, skippable sections. → [The running example](../part0-orientation/running-example.md)
 
 **semantic search** — Retrieval by embedding similarity to the query, matching meaning without shared words — "auth check" can surface password-verification code that never contains the string "auth". → [Retrieval for code](../part2-context/rag-for-code.md)
 

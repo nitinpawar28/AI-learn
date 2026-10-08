@@ -21,11 +21,14 @@ There is a second benefit. If you ever have to explain a system you built, in a 
 
     1. As of 2026-09-20, Sankshep is at version 3.0.0: a server for the Model Context Protocol (MCP), written in C# on .NET 10. An MCP server is a program that offers tools to AI coding assistants over a standard protocol, and [Part 3](../part3-mcp/why-mcp.md) explains that protocol properly.
     2. Its tagline is its thesis: "Maximum context, minimum tokens — with the benchmarks to prove it."
-    3. Its job is to sit beside a code repository and hand curated context to whatever assistant asks. It retrieves the relevant files, compresses them structurally, remembers project facts, and measures how much survived the compression.
+    3. Its job is to sit beside a code repository and hand curated context to whatever assistant asks. It retrieves the relevant files, compresses them structurally, remembers project facts, and measures how much the compression removed.
     4. It is local-first. Embeddings are computed on your own machine with a local ONNX model, vectors live in SQLite via sqlite-vec, and it sends no telemetry by default.
     5. Per ADR-0014 — an architecture decision record, a short document capturing one decision and its rationale — the source code is proprietary and private, while the binary is free to use.
 
     That fifth sentence matters for this site. The next section explains why.
+
+!!! warning "Evolving — verified 2026-10-08"
+    The version above is still the current release: it is the newest on [nuget.org](https://www.nuget.org/packages/Sankshep), and the one Sankshep's [public changelog](https://nitinpawar28.github.io/sankshep-docs/changelog/) names as current. Version 4.0.0 is built but not yet published. Where a page teaches a change from 4.0.0, it says so on the spot, as built and not yet published; everything else on this site describes 3.0.0, apart from passages labelled as history. This changes quickly; check [nuget.org](https://www.nuget.org/packages/Sankshep) for current values.
 
 ## The ground rules
 
@@ -41,7 +44,7 @@ If you skipped every such block on this entire site, you would still get a compl
 - Fresh illustrative snippets of at most 15 lines, always captioned "Illustrative — simplified, not Sankshep source".
 - Facts from Sankshep's public record only: tool and resource names, command-line flags and environment variables, ADR numbers and titles, the names of its architecture-enforcing tests, and the figures on its published benchmarks page.
 
-Nothing gets invented to fill gaps. If a detail is not in the public record, this site describes it conceptually or leaves it out.
+Nothing gets invented to fill gaps. If a detail is not in the public record, this site describes it conceptually or leaves it out. The one exception is labelled wherever it appears: a change from a release that is built but not yet published may be taught early, from that release's changelog, which anyone can check on the day the release is published.
 
 That constraint is not a limitation to apologize for. Describing a system precisely without showing its internals is a skill you will need in any job involving other people's proprietary code, and this site demonstrates it on every page.
 
@@ -89,7 +92,7 @@ The curriculum walks this picture layer by layer. Part 1 is the model layer. Par
     ??? success "Answer"
         Real constraints that cannot be negotiated away. A production system has users, performance budgets, security audits, and history. So its decisions come with recorded alternatives, costs, and written rationale. A demo can be quietly rewritten whenever a question gets hard.
 
-        The decision record is the teaching material, and it survives redaction, because you can explain a decision without quoting the code. The trade-off is real too: you must trust the stated facts. That is why the site restricts itself to the public record and says so openly.
+        The decision record is the teaching material, and it survives redaction, because you can explain a decision without quoting the code. The trade-off is real too: you must trust the stated facts. That is why the site restricts itself to the public record, labels its one exception, and says so openly.
 
 2. In the three-layer frame, the model and an MCP server need to work together to answer your question. Which layer connects them, and what does that imply?
 

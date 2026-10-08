@@ -55,7 +55,7 @@ Every node on the map links to its chapter in the stage-by-stage list below.
 | 0 | [Running example](running-example.md) | Explain why the site teaches against a real server, not toy demos | Three-layer frame |
 | 0 | The map | Navigate the full curriculum; find any stage by topic or by time | Full curriculum flowchart |
 | 1 | [Tokens](../part1-fundamentals/tokens.md) | Estimate token cost for any text; predict why code costs more than prose | BPE merge loop; two tokenizers, one text |
-| 1 | [Prediction](../part1-fundamentals/what-llms-do.md) | Describe next-token prediction precisely; use temperature, top-p, and top-k as engineering controls; explain what attention and the KV cache cost you | Autoregressive loop; sampling pipeline; training vs. inference timeline |
+| 1 | [Prediction](../part1-fundamentals/what-llms-do.md) | Describe next-token prediction precisely; explain what temperature, top-p, and top-k do to the draw, and why frontier providers are taking them away; explain what attention and the KV cache cost you | Autoregressive loop; sampling pipeline; training vs. inference timeline |
 | 1 | [Context window](../part1-fundamentals/context-windows.md) | Explain why re-sending costs compound; place important context at the edges | Window composition; lost-in-the-middle curve |
 | 1 | [Embeddings](../part1-fundamentals/embeddings.md) | Trace a similarity search from index to result; diff the four silent failure modes; choose a model on the properties that decide it | Quadrant chart; silent-failure decision tree |
 | 1 | [Prompting](../part1-fundamentals/prompting-basics.md) | Build a five-part prompt; trace bad answers back to the missing part | Five-part flowchart with failure modes |
@@ -105,7 +105,7 @@ Follow the arrows and notice two things. First, the model never touches your rep
 Second, tokens enter at the first arrow and are paid for at every arrow after it: each hop either adds tokens to the window or re-sends the ones already there. Part 2 exists to shrink that flow; [Cost](../part4-agents/cost-efficiency.md) exists to account for it honestly.
 
 !!! example "In the wild: Sankshep"
-    The middle of this map is not hypothetical. Sankshep — the production MCP server introduced in [the running example](running-example.md) — ships the Part 2 stages as subsystems (retrieval, minimization, memory, measurement) and exposes them through the Part 3 machinery: tools, a prompt, and a resource, served over stdio or HTTP. Part 5 re-walks the map through its architecture, one design decision at a time. If you skip every block like this one, the curriculum still stands on its own; if you read them, every abstraction gets a production counterweight.
+    The middle of this map is not hypothetical. Sankshep — the production MCP server introduced in [the running example](running-example.md) — ships the Part 2 stages as subsystems (retrieval, minimization, memory, measurement) and exposes them through the Part 3 machinery: tools, a prompt, and a resource, served over stdio or HTTP. The measurement that ships is token accounting; recall is scored by a maintainer-run eval harness that is not part of the server. Part 5 re-walks the map through its architecture, one design decision at a time. If you skip every block like this one, the curriculum still stands on its own; if you read them, every abstraction gets a production counterweight.
 
 ## Where to start
 

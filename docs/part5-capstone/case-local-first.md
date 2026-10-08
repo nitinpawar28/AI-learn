@@ -24,7 +24,7 @@ Users cannot read the code to check what it phones home. So whatever privacy pro
 
 ## The decision
 
-ADR-0011: observability is local-only, and the metrics that exist are low-cardinality only. As of 2026-07-18, the shipped server at v1.8.0 sends no telemetry.
+ADR-0011: observability is local-only by default. Every export is opt-in, and carries only counts and histograms, with low-cardinality labels. The shipped server sends no telemetry unless you configure it to.
 
 Three design choices make that a property of the architecture, rather than a policy statement.
 
@@ -38,13 +38,13 @@ High-cardinality labels are the classic accidental-capture bug. One string inter
 
 The observability that does exist points at the user, not a vendor. The `sankshep://stats` resource and the `token_report` tool report locally, to you.
 
-**The one network edge is narrow, verified, and removable.** The only egress in the design is the one-time embedding-model download: SHA-256 manifest, atomic rename, fail-closed on mismatch. [The local-ONNX case study](case-local-onnx-vs-cloud.md) has the detail. And `SANKSHEP_MODEL_OFFLINE=1` removes even that, for air-gapped machines.
+**The one default network edge is narrow, verified, and removable.** The only egress by default is the one-time embedding-model download: SHA-256 manifest, atomic rename, fail-closed on mismatch. [The local-ONNX case study](case-local-onnx-vs-cloud.md) has the detail. And `SANKSHEP_MODEL_OFFLINE=1` removes even that, for air-gapped machines.
 
-The optional `--http` transport binds to loopback, and fails closed on unauthenticated non-loopback binds unless `SANKSHEP_ALLOW_UNAUTHENTICATED=1` is set deliberately.
+The optional `--http` transport binds to loopback, and refuses to start exposed to the network without authentication unless you explicitly accept the exposure. [Safety and judgment](../part4-agents/safety.md) has the details.
 
 The v1.8.0 security audit treated egress as a defended boundary, not an assumption.
 
-Here is the resulting data-flow map. Solid edges exist. Dashed, crossed edges are the ones that deliberately do not.
+Here is the resulting data-flow map. Solid edges exist. The dashed arrow exists only if an operator opts in. Dashed, crossed edges are the ones that deliberately do not.
 
 ```mermaid
 flowchart LR
@@ -58,7 +58,8 @@ flowchart LR
     end
     subgraph net["The network"]
         DL["Model download host"]
-        TEL["Telemetry backend"]
+        TEL["Vendor telemetry backend"]
+        COL["Your OTLP collector"]
         API["LLM API"]
     end
     CLIENT <-->|"stdio JSON-RPC"| SRV
@@ -66,8 +67,9 @@ flowchart LR
     SRV <--> STORE
     SRV --> MODEL
     SRV --> MET
-    SRV -->|"one-time model fetch — the only egress;<br/>hash-verified, fail-closed;<br/>SANKSHEP_MODEL_OFFLINE=1 removes it"| DL
+    SRV -->|"one-time model fetch — the only default egress;<br/>hash-verified, fail-closed;<br/>SANKSHEP_MODEL_OFFLINE=1 removes it"| DL
     SRV x-. no code path .-x TEL
+    MET -.->|"opt-in only — SANKSHEP_OTLP_ENDPOINT<br/>counts and histograms, never code"| COL
     SRV x-. never at request time .-x API
     CLIENT -->|"the client's business,<br/>chosen by you"| API
 ```
@@ -84,7 +86,7 @@ This maximizes fleet insight, because most users never change defaults. Which is
 
 For a tool whose input is proprietary source code, defaults decide what actually happens on thousands of machines. And every high-cardinality event field is one bug away from exfiltrating code.
 
-**Opt-in telemetry.** Honest. But the data is sparse and biased toward enthusiasts, which limits its value for the very prioritization arguments used to justify it.
+**Opt-in telemetry to the vendor.** Honest. But the data is sparse and biased toward enthusiasts, which limits its value for the very prioritization arguments used to justify it.
 
 **A hosted service.** Run the server in the cloud, and observability comes free. Every request is already on your infrastructure.
 
@@ -92,7 +94,7 @@ But now the entire repository passes through someone else's machines. That inver
 
 ## The tradeoffs
 
-The honest cost is **no fleet insight**.
+The honest cost is **no fleet insight for the maintainer**.
 
 The maintainer cannot see which tools get called, which languages fail to parse in the wild, or what latency real users experience. There is no crash dashboard.
 
@@ -108,11 +110,11 @@ The decision is also protected by scope discipline.
 
 ADR-0019 defines the product as a focused local, stdio-first core, with an enterprise tier optional and off by default. In its words, "scope has to be declared".
 
-Fleet-style features are not banned forever. They are fenced into a tier a user must explicitly turn on. The default stays local no matter what the roadmap grows.
+Fleet-style features are not banned, and one already ships: opt-in metrics export. They are fenced into a tier a user must explicitly turn on. The default stays local no matter what the roadmap grows.
 
 ## What would change it
 
-- **An organization deploying to a fleet and wanting aggregate metrics.** That is the enterprise-tier shape ADR-0019 anticipates: declared, opt-in, off by default. And any metrics would need to stay low-cardinality, for the same accidental-capture reason.
+- **An organization deploying to a fleet and wanting aggregate metrics.** That is the enterprise-tier shape ADR-0019 anticipates: declared, opt-in, off by default. And any metrics would need to stay low-cardinality, for the same accidental-capture reason. **This condition has fired, and the default did not move.** A fleet operator can set `SANKSHEP_OTLP_ENDPOINT` to push the metrics — counts and histograms, tagged with the repository's folder name and optional team and instance labels — to an OpenTelemetry collector the operator runs. They never carry code, paths, or queries, and with the variable unset the server pushes no metric anywhere. The one other opt-in, `SANKSHEP_PROMETHEUS=1`, is a pull rather than a push: in HTTP mode it serves a `/metrics` endpoint for the operator's own Prometheus to scrape. The public [deployment guide](https://nitinpawar28.github.io/sankshep-docs/deployment/#telemetry-opt-in-counts-only) and [security page](https://nitinpawar28.github.io/sankshep-docs/security/#data-handling-what-leaves-your-machine) have the details.
 - **Evidence that local evals systematically miss real-world failures.** If field failures repeatedly shipped because no eval could represent them, the cost side of the ledger grows. Then a minimal opt-in crash signal becomes worth debating.
 - **Becoming a hosted product.** Then the whole trust model gets renegotiated, not just telemetry. That is a different product, not a patch to this one.
 
@@ -138,7 +140,7 @@ What would *not* change it: convenience.
 
         High-cardinality fields are one string-interpolation bug away from recording proprietary source.
 
-        Designing the schema so it cannot hold the secret beats promising not to look at it. And it keeps the promise intact even if the metrics are ever exported deliberately, later.
+        Designing the schema so it cannot hold the secret beats promising not to look at it. And it keeps the promise intact when an operator deliberately exports the metrics, as the opt-in fleet export allows.
 
 2. The honest cost of no telemetry is no fleet insight. How does Sankshep compensate, and what does the compensation *not* cover?
 
@@ -149,14 +151,14 @@ What would *not* change it: convenience.
 
         It does not answer "what do real users do, and where does it fail on their machines?" That gap is accepted deliberately, and bug reports must carry their own reproductions.
 
-3. What structural evidence backs the claim "no telemetry", given that the source is proprietary under ADR-0014 and cannot be audited by users?
+3. What structural evidence backs the claim "no telemetry by default", given that the source is proprietary under ADR-0014 and cannot be audited by users?
 
     ??? success "Answer"
         The architecture is checkable from outside.
 
         Request-time work is fully local: parsing, ONNX embeddings, sqlite-vec, and a composer that never calls an LLM. So there is no network dependency to hide traffic in.
 
-        The only egress is a one-time, hash-verified model download, which `SANKSHEP_MODEL_OFFLINE=1` removes entirely.
+        The only default egress is a one-time, hash-verified model download, which `SANKSHEP_MODEL_OFFLINE=1` removes entirely. Metrics leave only if an operator opts in: `SANKSHEP_OTLP_ENDPOINT` pushes them to a collector the operator runs, and in HTTP mode `SANKSHEP_PROMETHEUS=1` lets the operator's own Prometheus scrape them. Either way they are counts and histograms, never code, paths, or queries.
 
         And the `--http` transport binds to loopback, failing closed on unauthenticated non-loopback use.
 

@@ -149,8 +149,8 @@ MCP's answer is to give servers a deliberately boring role.
 
 A **resource server** validates the access tokens presented to it, and serves its own resources. It never issues tokens, and never forwards them. Whatever it needs from upstream services, it gets with credentials of its own.
 
-!!! warning "Evolving — verified 2026-07-18"
-    The MCP authorization specification makes a server an OAuth 2.1 resource server. It validates tokens, never issues them, and must not pass them through. Access tokens MUST be bound to the specific server via the RFC 8707 `resource` parameter, and clients discover a server's requirements via RFC 9728 protected-resource metadata. Streamable HTTP transports SHOULD implement this. stdio servers SHOULD NOT — they take any upstream credentials from the environment instead. This changes quickly; check the [MCP specification](https://modelcontextprotocol.io/specification/) for current values. Spec status and governance are covered in [what problem MCP solves](../part3-mcp/why-mcp.md).
+!!! warning "Evolving — verified 2026-10-08"
+    The MCP authorization specification (revision 2026-07-28) makes a protected server an OAuth 2.1 resource server. It validates tokens, never issues them, and must not pass them through: servers "MUST NOT accept or transit any other tokens". Access tokens MUST be bound to the specific server via the RFC 8707 `resource` parameter, and clients discover a server's requirements via RFC 9728 protected-resource metadata. Authorization itself is optional; where it is supported, HTTP-based transports SHOULD follow the specification. stdio servers SHOULD NOT — they take any upstream credentials from the environment instead. The 2026-07-28 revision also deprecates Dynamic Client Registration in favor of Client ID Metadata Documents. And before redeeming an authorization code, a client must check any `iss` the authorization server returned against the issuer it expected (RFC 9207), the specification's defense against mix-up attacks. This changes quickly; check the [MCP authorization specification](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization) for current values. Spec status and governance are covered in [what problem MCP solves](../part3-mcp/why-mcp.md).
 
 ```mermaid
 sequenceDiagram
@@ -217,15 +217,15 @@ These code paths now run automatically, at machine speed, with arguments emitted
 
 ## In practice: Sankshep
 
-As of 2026-07-18, Sankshep v1.8.0 applies this chapter's judgment in both directions.
+[Sankshep](../part0-orientation/running-example.md) applies this chapter's judgment in both directions.
 
-The authorization stance is ADR-0012, which adopts the MCP model in full.
+The authorization stance is ADR-0012, which adopts the MCP model.
 
-Over HTTP, using `--http` in stateless mode, Sankshep is an OAuth 2.1 resource server. It validates tokens, never issues them, and never passes them through.
+Over HTTP (`--http`), Sankshep can authenticate callers with bearer API keys, compared in constant time, or as an OAuth 2.1 resource server. In that mode it validates tokens from your identity provider, never issues them, and never passes them through.
 
 Over stdio — the default — there is no OAuth at all. Any credentials come from the environment.
 
-The HTTP listener binds to loopback and fails closed. It refuses unauthenticated requests on a non-loopback bind, unless `SANKSHEP_ALLOW_UNAUTHENTICATED=1` is set explicitly. Insecurity must be opted into by name, never arrived at by default.
+The HTTP listener binds to loopback by default, and fails closed. Bound to a non-loopback address with no authentication configured, it refuses to start, unless `SANKSHEP_ALLOW_UNAUTHENTICATED=1` is set explicitly. Insecurity must be opted into by name, never arrived at by default.
 
 The trust model matches the first diagram in this chapter.
 
@@ -241,11 +241,15 @@ The v1.8.0 release hardened the server against a security audit whose findings m
 | Path escape | Relative paths are anchored to the repository root and cannot `../` out of it. |
 | Decompression bomb | `.docx` extraction caps are checked from the ZIP central directory before any bytes are inflated. |
 | Unbounded traversal | Directory walks are iterative, with symlink-cycle sets — a looped symlink cannot recurse the walker to death. |
-| Fail-open default | Non-loopback binds refuse unauthenticated requests unless the environment variable above is set. |
+| Fail-open default | A non-loopback bind with no authentication configured refuses to start unless the environment variable above is set. |
 
 The first row is the trust model taken seriously.
 
 Even a tool that never leaves your machine treats the repository it reads as untrusted input. Because the `.gitignore` in a repo you just cloned was written by someone else.
+
+Since that release, the first row has gained a guarantee its timeout could not give. Every ignore pattern now compiles with .NET's non-backtracking regex engine, whose matching time is linear in the input length, as Sankshep's [security page](https://nitinpawar28.github.io/sankshep-docs/security/#hardening-verified-posture) states. A timeout bounds the damage. A linear-time engine removes the catastrophic case by construction.
+
+The same distrust now reaches configuration. A served repository's own `appsettings.json` is not read as configuration on either transport. Before 2.0.0, such a file could re-bind the server to `0.0.0.0`.
 
 ## Checkpoints
 
@@ -277,7 +281,7 @@ Even a tool that never leaves your machine treats the repository it reads as unt
 4. A teammate proposes adding OAuth login to your stdio MCP server "for defense in depth". What does the MCP specification advise, and what is the reasoning?
 
     ??? success "Answer"
-        As of 2026-07-18, the specification says stdio servers SHOULD NOT implement OAuth. Upstream credentials come from the environment.
+        As of 2026-10-08, the specification says stdio servers SHOULD NOT implement OAuth. Upstream credentials come from the environment.
 
         The client spawns a stdio server as a subprocess under the same OS account. So there is no privilege boundary between them, and a login ceremony there defends nothing.
 

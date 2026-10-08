@@ -110,15 +110,15 @@ flowchart LR
 
 ## In practice: Sankshep
 
-As of 2026-09-20, Sankshep v3.0.0's published benchmark suite is a direct instance of this chapter. It is called `keypoint-recall-v1` and described in its [public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/).
+Sankshep's published benchmark suite is a direct instance of this chapter, described on its [public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/).
 
-The suite has 8 questions broken into 52 atomic facts, over a real, private C# trading platform, with files ranging from roughly 750 to 37,000 tokens. `claude-opus-4-8` serves as judge, with a verbosity guard built into the rubric. Each fact was written from a read of the source and then put to an adversarial re-read that refused 12 of 64 candidates — a detail worth copying, because the facts a benchmark *rejects* decide what it can measure.
+The suite has 8 questions broken into 52 atomic facts, over a real, private production C# service — its order-execution subsystem — with files ranging from roughly 750 to 37,000 tokens. `claude-opus-4-8` serves as judge. Each fact was written from a read of the source and then put to an adversarial re-read that refused 12 of 64 candidates — a detail worth copying, because the facts a benchmark *rejects* decide what it can measure.
 
 Per ADR-0008, the harness drives the real server binary as a subprocess over stdio. The wire protocol is also the test interface.
 
-The flagship numbers, verified 2026-09-20, by [minimization level](structural-minimization.md):
+The flagship numbers were measured 2026-09-20 on v3.0.0, one row per [minimization level](structural-minimization.md). Recall is judged, so it carries the judge's error bar, measured [below](#how-much-the-judge-itself-moves). Compression is arithmetic and repeats exactly.
 
-| Level | Key-point recall | Compression |
+| Level | Key-point recall (±≈0.05) | Compression |
 | --- | --- | --- |
 | Conservative | 0.50 | 38.5% |
 | Balanced | 0.67 | 59.5% |
@@ -126,7 +126,7 @@ The flagship numbers, verified 2026-09-20, by [minimization level](structural-mi
 
 ```mermaid
 xychart-beta
-    title "Recall (line) vs compression (bars), verified 2026-09-20"
+    title "Recall (line) vs compression (bars), measured 2026-09-20 on v3.0.0"
     x-axis ["Conservative", "Balanced", "Aggressive"]
     y-axis "Fraction (0 to 1)" 0 --> 1
     bar [0.385, 0.595, 0.775]
@@ -137,32 +137,38 @@ The headline is Balanced, and it is the opposite of what most people expect: it 
 
 Aggressive's 0.10 is lossy by design, and published anyway. That is rule 2 in action.
 
+!!! warning "Evolving — verified 2026-10-08"
+    These are still the only published numbers, and they were measured on v3.0.0. Sankshep 4.0.0 — built, not yet published as of 2026-10-08 — changes what a call that fills its budget delivers, as [Structural minimization](structural-minimization.md#in-practice-sankshep) describes, and how a partly delivered file is credited, covered below. Nothing has been re-measured on it, so read the table, and the composed-versus-naive pair below, as v3.0.0's — compression included, credited under 3.0.0's rule for a file cut to fit. New figures on the [public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/) would replace these, chart included.
+
 ### How much the judge itself moves
 
-This is the question a skeptic asks first, and most published benchmarks cannot answer it. Sankshep ran the same set **five times against the same code**:
+This is the question a skeptic asks first, and most published benchmarks cannot answer it. Sankshep ran the set five times: twice on one commit, then three more times after a change to its ranking.
 
 | | Balanced key-point recall |
 | --- | --- |
-| Five runs, unchanged code | 0.703, 0.649, 0.682, 0.661, 0.667 |
+| Two runs, one commit | 0.703, 0.649 |
+| Three runs, after the ranking change | 0.682, 0.661, 0.667 |
 
-A spread of 0.054, from nothing but the judge changing its mind. **Every compression figure was identical across all five runs** — because compression is arithmetic on token counts and no judge is involved.
+The two runs of one commit differ by 0.054, from nothing but the judge changing its mind. **Compression did not move between runs of the same code** — because compression is arithmetic on token counts and no judge is involved. It moved only when the code did: the ranking change took Balanced compression from 56.2% to 59.5%, identically on every run since.
 
-That contrast is the lesson. It separates *the instrument is noisy* from *the quantity is noisy*, and it tells you which of your own numbers you are allowed to compare. On this suite, a recall difference under about 0.05 is not evidence of anything — including a difference you compute between two rows of the table above.
+That contrast is the lesson. It separates *the instrument is noisy* from *the quantity is noisy*, and it tells you which of your own numbers you are allowed to compare. On this suite, a recall difference under about 0.05 is not evidence of anything — including any difference between the two rows of the table above. That is why no recall gain is claimed for the ranking change.
 
-The practical consequence: Sankshep's regression gate floors Balanced recall at **0.60**, below the measurement rather than at it. A gate set at the measured value trips on the judge having a different opinion, and a gate that cries wolf is one everyone learns to ignore.
+The practical consequence: Sankshep's regression gate sets its Balanced recall floor below the measurement rather than at it. A gate set at the measured value trips on the judge having a different opinion, and a gate that cries wolf is one everyone learns to ignore. The gate belongs to the maintainer's benchmark run, which fails closed: it exits non-zero when Balanced recall falls below that floor. It runs on demand rather than on every merge, because every judged run costs API calls — a deliberate departure from the per-merge gate drawn under Rule 1.
 
 Two more honest-accounting details.
 
-First, a published trade-off. In a composed-versus-naive eval, naive context — every raw file, uncapped — scored 1.00 recall against 0.66 for the composed prompt, at a 72.6% token reduction. An unflattering pair, printed rather than hidden.
+First, a published trade-off, also measured 2026-09-20 on v3.0.0. In a composed-versus-naive eval, naive context — every raw file, uncapped — scored 1.00 recall against 0.66 for the composed prompt, at a 72.6% token reduction: 38,320 tokens delivered against 139,841. Both recall figures are judged, so read them with the judge's error bar; the token counts are arithmetic. An unflattering pair, printed rather than hidden.
 
 !!! failure "Common misconception: the harness reported it, so it measured it"
-    That 72.6% used to read 32.6%, and the smaller number was wrong for a reason worth knowing. The token counts came from a counter that **accumulates for the life of the target repository** — so the harness was reporting every measurement ever taken against that repo, not the run that printed it.
+    That 72.6% is not the first figure this comparison produced, and an earlier one was wrong for a reason worth knowing. The token counts came from a counter that **accumulates for the life of the target repository** — so the harness was reporting every measurement ever taken against that repo, not the run that printed it.
 
-    Nobody noticed by reading the percentage. It was caught by a **deterministic quantity that moved**: the naive baseline is a plain read of the same whole files, so it cannot change between runs — and it climbed 155,618, then 536,806 tokens across four runs over files nobody had touched.
+    Nobody noticed by reading the percentage. It was caught by a **deterministic quantity that moved**: the naive baseline is a plain read of the same whole files, so it cannot change between runs — yet it kept growing, run after run, over files nobody had touched.
 
     That is a general detection method for any evaluation harness. Find a number in your report that *cannot* move unless the inputs move, and watch it. When it moves, your instrument is wrong, not your system.
 
-Second, per ADR-0017, savings reports compare against delivered files only. Never against everything-in-scope divided by budget. Dollar figures were deleted from reports entirely, on the grounds that "a ratio whose numerator and denominator come from different universes is not a measurement."
+Second, per ADR-0017, savings reports compare against the original size of the files actually delivered. Never against everything-in-scope divided by budget. Dollar figures were deleted from reports entirely, on the grounds that "a ratio whose numerator and denominator come from different universes is not a measurement."
+
+That rule still leaves a quieter loophole. On 3.0.0, a file cut to fit the budget counts as delivered at its full original size, so a 300-token excerpt of a 6,000-token file reports about 95% compression — almost all of it withholding. Sankshep 4.0.0, built but not yet published as of 2026-10-08, closes it: a truncated excerpt is credited with only the source its kept lines cover, and a file delivered in declaration pieces with those pieces' own source spans — never with the whole file.
 
 And the honest non-claim. "Roundtrips avoided" — the idea that better context saves whole [agent-loop rounds](../part4-agents/cost-efficiency.md) — is explicitly not measured, so it is not claimed. The full story is in the capstone: [case study — measure what you ship](../part5-capstone/case-measure-what-you-ship.md).
 

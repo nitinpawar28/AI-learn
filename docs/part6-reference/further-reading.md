@@ -14,14 +14,14 @@ Second, the list is deliberately short. Primary sources and official documentati
 
 ### Counting tokens
 
-- [tiktoken](https://github.com/openai/tiktoken) — OpenAI's open-source tokenizer library; the quickest way to count [tokens](../part1-fundamentals/tokens.md) locally, and the library behind the hands-on exercise in [Tokens and tokenization](../part1-fundamentals/tokens.md). *Verified 2026-07-18.*
-- [Anthropic token counting](https://docs.anthropic.com/en/docs/build-with-claude/token-counting) — the official token-counting endpoint for Claude models; [Tokens and tokenization](../part1-fundamentals/tokens.md) explains when you need an endpoint instead of a local library. *Verified 2026-07-18.*
+- [tiktoken](https://github.com/openai/tiktoken) — OpenAI's open-source tokenizer library; the quickest way to count [tokens](../part1-fundamentals/tokens.md) locally, and the library behind the hands-on exercise in [Tokens and tokenization](../part1-fundamentals/tokens.md). *Verified 2026-10-08.*
+- [Anthropic token counting](https://platform.claude.com/docs/en/build-with-claude/token-counting) — the official token-counting endpoint for Claude models; [Tokens and tokenization](../part1-fundamentals/tokens.md) explains when you need an endpoint instead of a local library. *Verified 2026-10-08.*
 
 ### Context windows
 
-- [Claude models overview](https://docs.anthropic.com/en/docs/about-claude/models) — Anthropic's official model listing, including [context-window](../part1-fundamentals/context-windows.md) sizes; [The context window](../part1-fundamentals/context-windows.md) is the owning chapter for every figure this site quotes. *Verified 2026-07-18.*
-- [OpenAI models](https://platform.openai.com/docs/models) — the equivalent listing for the GPT family. *Verified 2026-07-18.*
-- [Gemini models](https://ai.google.dev/gemini-api/docs/models) — the equivalent listing for the Gemini family. *Verified 2026-07-18.*
+- [Claude models overview](https://platform.claude.com/docs/en/models/overview) — Anthropic's official model listing, including [context-window](../part1-fundamentals/context-windows.md) sizes; [The context window](../part1-fundamentals/context-windows.md) is the owning chapter for every figure this site quotes. *Verified 2026-10-08.*
+- [OpenAI models](https://developers.openai.com/api/docs/models) — the equivalent listing for the GPT family. *Verified 2026-10-08.*
+- [Gemini models](https://ai.google.dev/gemini-api/docs/models) — the equivalent listing for the Gemini family. *Verified 2026-10-08.*
 
 ### How models actually run
 
@@ -37,14 +37,14 @@ Second, the list is deliberately short. Primary sources and official documentati
 
 ### Embeddings
 
-- [MTEB leaderboard](https://huggingface.co/spaces/mteb/leaderboard) — the standard starting point for shortlisting an embedding model, with code-retrieval scores reported separately from prose. [Embeddings and similarity](../part1-fundamentals/embeddings.md) owns the caveats — chiefly that v2 scores are not comparable with v1, and that a leaderboard shortlists rather than decides. *Verified 2026-08-20.*
+- [MTEB leaderboard](https://huggingface.co/spaces/mteb/leaderboard) — the standard starting point for shortlisting an embedding model, with code-retrieval scores reported separately from prose. [Embeddings and similarity](../part1-fundamentals/embeddings.md) owns the caveats — chiefly that v2 scores are not comparable with v1, and that a leaderboard shortlists rather than decides. *Verified 2026-10-08.*
 - [Sentence Transformers](https://sbert.net) — the Python library used in the hands-on in [Embeddings and similarity](../part1-fundamentals/embeddings.md); its documentation covers pooling, normalization, and similarity search in practical terms. *Verified 2026-07-18.*
 
 ## Part 2 — context engineering
 
 - [Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — Anthropic's engineering guidance; it names "context rot" and makes the vendor's own case for the thesis of [Part 2](../part2-context/index.md): curate the window, don't fill it. *Verified 2026-07-18.*
 
-The measured numbers in Part 2 — recall held against compression — come from Sankshep's benchmark summary, not from a public web source.
+The measured numbers in Part 2 — recall held against compression — come from [Sankshep's public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/), which also publishes the method, the judge's run-to-run spread, and its own stated limits. *Verified 2026-10-08.*
 
 [Measuring context quality](../part2-context/measuring-quality.md) presents them together with the method and its caveats.
 
@@ -54,8 +54,8 @@ The measured numbers in Part 2 — recall held against compression — come from
 
 - [MCP specification, revision 2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28) — the current revision, and the one this site teaches. Read it after [The wire protocol](../part3-mcp/wire-protocol.md) and it will feel familiar. *Verified 2026-08-20.*
 - [Changelog for 2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28/changelog) — **read this one even if you read nothing else here.** It documents the largest revision since the protocol launched: the removal of the `initialize` handshake and protocol-level sessions, the addition of `server/discover`, the MRTR pattern replacing server-initiated requests, and the deprecation of Roots, Sampling, and Logging. It is also a compact case study in how a protocol sheds a design that did not scale. *Verified 2026-08-20.*
-- [Versioning policy](https://modelcontextprotocol.io/specification/versioning) — how MCP names revisions and which one is current; consult it before trusting a version string in any tutorial, including this site. *Verified 2026-08-20.*
-- [Feature lifecycle and deprecation policy](https://modelcontextprotocol.io/community/feature-lifecycle) — the Active → Deprecated → Removed states and the twelve-month minimum deprecation window, adopted with the 2026-07-28 revision. It is what makes "deprecated" a schedule rather than a warning. *Verified 2026-08-20.*
+- [Versioning policy](https://modelcontextprotocol.io/docs/learn/versioning) — how MCP names revisions and which one is current; consult it before trusting a version string in any tutorial, including this site. *Verified 2026-10-08.*
+- [Feature lifecycle and deprecation policy](https://modelcontextprotocol.io/community/feature-lifecycle) — the Active → Deprecated → Removed states and the twelve-month minimum deprecation window, adopted with the 2026-07-28 revision, along with the expedited path that lets a feature posing an active security risk be removed after as little as ninety days. It is what makes "deprecated" a schedule rather than a warning. *Verified 2026-10-08.*
 - [Streamable HTTP transport](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http) — the normative text behind [Transports](../part3-mcp/transports.md), including the required `Mcp-Method` and `Mcp-Name` headers. *Verified 2026-08-20.*
 - [MCP specification, revision 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25) — the previous revision, now final. Worth keeping to hand: plenty of deployed servers and clients still speak it, and it is the version described by most material written before mid-2026. *Verified 2026-08-20.*
 
@@ -66,33 +66,35 @@ The measured numbers in Part 2 — recall held against compression — come from
 
 ### SDKs
 
-- [Official SDKs index](https://modelcontextprotocol.io/docs/sdk) — the complete SDK list with tier classifications; the tier system is introduced in [What problem MCP solves](../part3-mcp/why-mcp.md). *Verified 2026-07-18.*
-- [TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) — Tier 1; the SDK behind the TypeScript tabs in [Build your own MCP server](build-your-own.md). In v2 the monolithic package split into `@modelcontextprotocol/server` and `@modelcontextprotocol/client`. *Verified 2026-08-20.*
-- [Python SDK](https://github.com/modelcontextprotocol/python-sdk) — Tier 1; the primary SDK of the walkthrough in [Build your own MCP server](build-your-own.md). *Verified 2026-08-20.*
-- [Python SDK v1 → v2 migration guide](https://py.sdk.modelcontextprotocol.io/migration/) — the breaking changes between the two lines, `FastMCP` → `MCPServer` among them; the reference behind the code on [Build your own MCP server](build-your-own.md). *Verified 2026-08-20.*
-- [C# SDK](https://github.com/modelcontextprotocol/csharp-sdk) — Tier 1; the SDK discussed in [Writing an MCP server](../part3-mcp/writing-a-server.md), and the one Sankshep confines behind its dependency fence. *Verified 2026-07-18.*
-- [Go SDK](https://github.com/modelcontextprotocol/go-sdk) — Tier 1; the fourth first-tier SDK. *Verified 2026-07-18.*
-- [`ModelContextProtocol` on NuGet](https://www.nuget.org/packages/ModelContextProtocol) — the C# SDK's package page; its version history is the living evidence examined in [the dependency fence case study](../part5-capstone/case-dependency-fence.md). *Verified 2026-07-18.*
+- [Official SDKs index](https://modelcontextprotocol.io/docs/sdk) — the complete SDK list with tier classifications; the tier system is introduced in [What problem MCP solves](../part3-mcp/why-mcp.md). *Verified 2026-10-08.*
+- [TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) — Tier 1; the SDK behind the TypeScript tabs in [Build your own MCP server](build-your-own.md). In v2 the monolithic package split into `@modelcontextprotocol/server` and `@modelcontextprotocol/client`. *Verified 2026-10-08.*
+- [Python SDK](https://github.com/modelcontextprotocol/python-sdk) — Tier 1; the primary SDK of the walkthrough in [Build your own MCP server](build-your-own.md). *Verified 2026-10-08.*
+- [Python SDK v1 → v2 migration guide](https://py.sdk.modelcontextprotocol.io/migration/) — the breaking changes between the two lines, `FastMCP` → `MCPServer` among them; the reference behind the code on [Build your own MCP server](build-your-own.md). *Verified 2026-10-08.*
+- [C# SDK](https://github.com/modelcontextprotocol/csharp-sdk) — Tier 1; the SDK discussed in [Writing an MCP server](../part3-mcp/writing-a-server.md), and the one Sankshep confines behind its dependency fence. *Verified 2026-10-08.*
+- [Go SDK](https://github.com/modelcontextprotocol/go-sdk) — Tier 1; the official SDK for Go. *Verified 2026-10-08.*
+- [Rust SDK](https://github.com/modelcontextprotocol/rust-sdk) — Tier 1; the official SDK for Rust, published as the `rmcp` crate. *Verified 2026-10-08.*
+- [Ruby SDK](https://github.com/modelcontextprotocol/ruby-sdk) — Tier 1; the official SDK for Ruby, published as the `mcp` gem. *Verified 2026-10-08.*
+- [`ModelContextProtocol` on NuGet](https://www.nuget.org/packages/ModelContextProtocol) — the C# SDK's package page; its version history is the living evidence examined in [the dependency fence case study](../part5-capstone/case-dependency-fence.md). *Verified 2026-10-08.*
 
 ### Clients
 
-- [VS Code: MCP servers](https://code.visualstudio.com/docs/copilot/chat/mcp-servers) — the official configuration docs for the one client whose format differs from the other three; [Connecting servers to IDEs](../part3-mcp/ide-integration.md) explains the difference and its symptom. *Verified 2026-07-18.*
+- [VS Code: MCP servers](https://code.visualstudio.com/docs/agent-customization/mcp-servers) — the official configuration docs, including the portable `.mcp.json` format VS Code prefers for new servers; [Connecting servers to IDEs](../part3-mcp/ide-integration.md) covers the details, and the symptom of getting them wrong. *Verified 2026-10-08.*
 - [Claude Code: MCP](https://code.claude.com/docs/en/mcp) — the official server-configuration docs for Claude Code. *Verified 2026-07-18.*
-- [Claude Desktop: MCP quickstart](https://modelcontextprotocol.io/quickstart/user) — the protocol project's user quickstart, which doubles as Claude Desktop's configuration guide. *Verified 2026-07-18.*
-- [Cursor documentation](https://cursor.com/docs) — Cursor's documentation home; its MCP pages cover the fourth configuration format in [Connecting servers to IDEs](../part3-mcp/ide-integration.md). *Verified 2026-07-18.*
+- [Claude Desktop: connecting local servers](https://modelcontextprotocol.io/docs/develop/connect-local-servers) — the protocol project's guide to connecting local MCP servers, which uses Claude Desktop as its example and doubles as Claude Desktop's configuration guide. *Verified 2026-10-08.*
+- [Cursor: MCP](https://cursor.com/docs/mcp) — Cursor's MCP documentation, covering the fourth configuration format in [Connecting servers to IDEs](../part3-mcp/ide-integration.md). *Verified 2026-10-08.*
 - [Official reference servers](https://github.com/modelcontextprotocol/servers) — small, readable server implementations, including the filesystem server used in the hands-on in [Connecting servers to IDEs](../part3-mcp/ide-integration.md); good code to read after [Build your own MCP server](build-your-own.md). *Verified 2026-07-18.*
 
 ## Part 4 — agents
 
 ### Tool platforms and pricing
 
-- [OpenAI function calling guide](https://platform.openai.com/docs/guides/function-calling) — the platform documentation behind the tool-count limits and guidance discussed in [Tool calling in depth](../part4-agents/tool-calling.md). *Verified 2026-07-18.*
-- [Anthropic tool use](https://docs.claude.com/en/docs/agents-and-tools/tool-use/overview) — Anthropic's tool-calling documentation, including on-demand tool discovery; the counterpart platform view. *Verified 2026-07-18.*
-- [Anthropic pricing](https://docs.anthropic.com/en/docs/about-claude/pricing), [OpenAI pricing](https://platform.openai.com/docs/pricing), and [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing) — the pages [Cost and efficiency](../part4-agents/cost-efficiency.md) links instead of hardcoding numbers; when a dollar figure matters, check these, not a blog post. *Verified 2026-07-18.*
+- [OpenAI function calling guide](https://developers.openai.com/api/docs/guides/function-calling) — the platform documentation behind the tool-count guidance discussed in [Tool calling in depth](../part4-agents/tool-calling.md); it also covers tool search, for deferring rarely used tools. *Verified 2026-10-08.*
+- [Anthropic tool use](https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview) — Anthropic's tool-calling documentation, including on-demand tool discovery; the counterpart platform view. *Verified 2026-10-08.*
+- [Anthropic pricing](https://platform.claude.com/docs/en/about-claude/pricing), [OpenAI pricing](https://developers.openai.com/api/docs/pricing), and [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing) — the pages [Cost and efficiency](../part4-agents/cost-efficiency.md) links instead of hardcoding numbers; when a dollar figure matters, check these, not a blog post. *Verified 2026-10-08.*
 
 ### Authorization
 
-- [MCP authorization](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization) — the normative text behind the auth model in [Safety and judgment](../part4-agents/safety.md): the server as an OAuth 2.1 resource server, and why token pass-through is forbidden. *Verified 2026-07-18.*
+- [MCP authorization](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization) — the normative text behind the auth model in [Safety and judgment](../part4-agents/safety.md): the server as an OAuth 2.1 resource server, and why token pass-through is forbidden. *Verified 2026-10-08.*
 - [RFC 8707: Resource Indicators for OAuth 2.0](https://datatracker.ietf.org/doc/html/rfc8707) — the mechanism that binds a token to the server it was issued for; short, and the heart of the confused-deputy defense. *Verified 2026-07-18.*
 - [RFC 9728: OAuth 2.0 Protected Resource Metadata](https://datatracker.ietf.org/doc/html/rfc9728) — how a client discovers a protected server's authorization server in the first place. *Verified 2026-07-18.*
 
@@ -100,7 +102,7 @@ The measured numbers in Part 2 — recall held against compression — come from
 
 Part 5 is grounded differently from the rest of the site.
 
-Its evidence base is Sankshep's own architecture decision records, and its published benchmark summary. Both are discussed throughout the case studies, with the facts verified against the project on 2026-07-18.
+Its evidence base is Sankshep's own architecture decision records, and its [public documentation](https://nitinpawar28.github.io/sankshep-docs/), from the architecture and security pages to the benchmarks and the changelog. Both are discussed throughout the case studies, with the facts last re-checked on 2026-10-08.
 
 Sankshep's source is private, so there is no repository to link. [The running example](../part0-orientation/running-example.md) explains the arrangement, and the redaction rule this site follows.
 
@@ -112,10 +114,10 @@ The MCP specification, which is the surface Sankshep implements. The C# SDK and 
 
 ## The tools behind this site
 
-- [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) — the documentation framework this site is built with. Its own documentation is worth reading as a model of clear technical writing, even if you never build a docs site. *Verified 2026-07-18.*
+- [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) — the documentation framework this site is built with. Its own documentation is worth reading as a model of clear technical writing, even if you never build a docs site. *Verified 2026-10-08.*
 
-!!! warning "Evolving — verified 2026-07-18"
-    This site pins `mkdocs-material` 9.7.7. Material entered maintenance mode in November 2025 — its maintainers' successor project is named Zensical — with patch releases expected through roughly November 2026. This changes quickly; check [the MkDocs Material site](https://squidfunk.github.io/mkdocs-material/) for current values.
+!!! warning "Evolving — verified 2026-10-08"
+    This site pins `mkdocs-material` 9.7.7, which is still its latest release. Material entered maintenance mode in November 2025 — its maintainers' successor project is named Zensical — with patch releases expected through roughly November 2026. Every build prints a warning from the Material team that MkDocs 2.0 is incompatible with Material. Here it is harmless: 9.7.7 requires MkDocs below 2.0, so the build never picks it up. This changes quickly; check [the MkDocs Material site](https://squidfunk.github.io/mkdocs-material/) for current values.
 
 !!! note "Settled"
     The Mermaid diagrams on this site render through Material's built-in `pymdownx.superfences` custom-fence mechanism — the officially recommended approach — with no separate Mermaid plugin involved.
