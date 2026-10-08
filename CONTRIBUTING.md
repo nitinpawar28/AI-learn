@@ -31,6 +31,22 @@ That sets an order, and getting it backwards produces a page that contradicts it
 Updating this site from the private repository makes it cite a public source that disagrees with it.
 This has happened; it is the reason the rule is written down.
 
+### Teaching ahead of a release
+
+The order above has one sanctioned exception, first used on 2026-10-08: the owner may decide to teach a
+change from a Sankshep release that is built but not yet published. When that happens:
+
+- **Say so where the fact appears** — "in 4.0.0, built but not yet published as of 2026-10-08" — in the
+  sentence itself or in an `Evolving` box dated the day it was checked. It must never read as released.
+- **The current release does not move.** It is stated once, on
+  [the running example](docs/part0-orientation/running-example.md), and it stays whatever nuget.org serves.
+- **Source it from that release's changelog**, which ships inside every package, so the claim becomes
+  checkable by anyone on the day the release is published.
+- **Teach no security change ahead of its release.** Security topics are taught only after the release
+  ships and `sankshep-docs` covers them.
+- **When the release ships**, re-check every such passage against the published `sankshep-docs`, drop the
+  "not yet published" wording, and move the current-release statement — in one pass, the same day.
+
 ## Dated facts
 
 Anything that moves — model behaviour, context sizes, protocol revisions, package versions, published
