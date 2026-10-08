@@ -28,8 +28,8 @@ The same server — same binary, same command line — plugs into all four major
 
 | Client | File | Top-level key | Quirk to remember |
 | --- | --- | --- | --- |
-| VS Code | `.vscode/mcp.json` (workspace) | `servers` | each entry needs an explicit `"type"`; tools run only in Agent mode |
-| Claude Code | `.mcp.json` (repo root) | `mcpServers` | `claude mcp add` writes the entry for you |
+| VS Code | `.mcp.json` (workspace root); legacy `.vscode/mcp.json` | `mcpServers`; the legacy file uses `servers` | prefers `.mcp.json` for new servers; to use tools, select **Agent** in the chat's agent picker |
+| Claude Code | `.mcp.json` (repo root) | `mcpServers` | `claude mcp add --scope project` writes the entry for you; without the flag it goes to your private `~/.claude.json` instead |
 | Claude Desktop | `claude_desktop_config.json` | `mcpServers` | user-level, not per-project; full quit and restart to reload |
 | Cursor | `.cursor/mcp.json` | `mcpServers` | also supports a home-directory variant covering all projects |
 
@@ -39,7 +39,7 @@ Here is one entry in all four dialects, using the official reference filesystem 
 
     ```json
     {
-      "servers": {
+      "mcpServers": {
         "filesystem": {
           "type": "stdio",
           "command": "npx",
@@ -81,6 +81,7 @@ Here is one entry in all four dialects, using the official reference filesystem 
     {
       "mcpServers": {
         "filesystem": {
+          "type": "stdio",
           "command": "npx",
           "args": ["-y", "@modelcontextprotocol/server-filesystem", "/absolute/path/to/dir"]
         }
@@ -88,26 +89,28 @@ Here is one entry in all four dialects, using the official reference filesystem 
     }
     ```
 
-!!! warning "Evolving — verified 2026-07-18"
-    Every file name, top-level key, and quirk in the table was checked against official client documentation on 2026-07-18: [VS Code](https://code.visualstudio.com/docs/copilot/chat/mcp-servers), [Claude Code](https://code.claude.com/docs/en/mcp), [Claude Desktop](https://modelcontextprotocol.io/quickstart/user), and [Cursor](https://cursor.com/docs). This changes quickly; check those pages for current values.
+VS Code and Claude Code now read the same file, so one committed `.mcp.json` serves both. The VS Code and Cursor entries carry `"type": "stdio"` because both clients' configuration references list it as required, though their own examples often leave it out. Claude Code reads an entry with no `type` as stdio, so the explicit field costs nothing there.
+
+!!! warning "Evolving — verified 2026-10-08"
+    Every file name, top-level key, and quirk on this page was checked against official client documentation on 2026-10-08: [VS Code](https://code.visualstudio.com/docs/agent-customization/mcp-servers) and its [guide to using tools](https://code.visualstudio.com/docs/agents/run/tools), [Claude Code](https://code.claude.com/docs/en/mcp), [Claude Desktop](https://modelcontextprotocol.io/docs/develop/connect-local-servers), and [Cursor](https://cursor.com/docs/mcp). This changes quickly; check those pages for current values.
 
 ## The gotcha: one client is the odd one out
 
 Look at the third column again.
 
-Three clients use `mcpServers`. VS Code uses `servers`, and it also requires an explicit `"type"` field on each entry.
+Every client now reads `mcpServers`. VS Code is the odd one out because it also reads an older file, `.vscode/mcp.json`, keyed `servers`. VS Code now calls that file deprecated and prefers `.mcp.json` for new servers. But it still reads the old file, and plenty of setup guides, VS Code's own examples among them, still show it.
 
 What makes this the gotcha is how the failure presents itself.
 
-Paste a working Cursor snippet into `.vscode/mcp.json` and the JSON stays perfectly valid. It just parks your server under a top-level key VS Code never reads.
+Paste a working Cursor snippet into `.vscode/mcp.json` and the JSON stays perfectly valid. It just parks your server under a top-level key that file never reads.
 
-Clients ignore unknown keys rather than validating against them. So nothing is malformed. Nothing spawns. Nothing errors. Nothing is logged.
+At runtime the unknown key is simply ignored. VS Code's editor does underline it while you have the file open, but that is all. Nothing spawns. Nothing errors. Nothing is logged.
 
-The symptom is silence.
+At runtime, the symptom is silence. The fix is to move the entry into `.mcp.json` at the workspace root, where `mcpServers` is the right key, or to rename the key to `servers` if you keep the legacy file.
 
-VS Code has a second quirk in the same spirit. **Agent mode** is the chat mode where the client attaches tool definitions to model requests and runs the tool calls the model emits. As of 2026-07-18, MCP tools in VS Code run only in this mode.
+VS Code has a second quirk in the same spirit. Its chat has an **agent picker**, and the agent selected there decides which instructions and tools apply to a request. VS Code's documentation says to select **Agent** to work with tools, the choice older guides call *Agent mode*.
 
-So a server can be configured, connected, and healthy, and its tools still never fire — because in other chat modes the definitions are never sent to the model at all.
+So a server can be configured, connected, and healthy, and its tools still never fire, because the agent selected in the picker never offered them to the model.
 
 ```mermaid
 flowchart TD
@@ -116,10 +119,10 @@ flowchart TD
     Q --> CC["Claude Code"]
     Q --> CD["Claude Desktop"]
     Q --> CU["Cursor"]
-    VSC --> VSCF["File: .vscode/mcp.json<br/>(workspace)"]
-    VSCF --> VSCK["Key: servers — the odd one out<br/>each entry needs explicit type"]
-    VSCK --> VSCQ["Use chat in Agent mode,<br/>or tools never fire"]
-    CC --> CCF["File: .mcp.json at repo root<br/>(or run: claude mcp add)"]
+    VSC --> VSCF["File: .mcp.json at workspace root<br/>(legacy: .vscode/mcp.json)"]
+    VSCF --> VSCK["Key: mcpServers<br/>legacy file: servers — the odd one out"]
+    VSCK --> VSCQ["Select Agent in the agent picker,<br/>or tools may never fire"]
+    CC --> CCF["File: .mcp.json at repo root<br/>(or run: claude mcp add --scope project)"]
     CCF --> CCK["Key: mcpServers"]
     CD --> CDF["File: claude_desktop_config.json<br/>(user profile, machine-wide)"]
     CDF --> CDK["Key: mcpServers"]
@@ -130,11 +133,11 @@ flowchart TD
 
 ## Scope and secrets
 
-Three of the four files live inside the repository: `.vscode/mcp.json`, `.mcp.json`, and `.cursor/mcp.json`.
+Three of the four clients read a file inside the repository: `.mcp.json`, which VS Code and Claude Code now share, and `.cursor/mcp.json`. VS Code's legacy `.vscode/mcp.json` lives there too.
 
-Commit them, and every teammate who clones the repo gets the server with zero setup.
+Commit them, and every teammate who clones the repo gets the server with almost no setup. Expect an approval step: Claude Code asks before it first uses a project's `.mcp.json` servers, and VS Code starts workspace servers only in a workspace you trust. Both checks are deliberate, because a committed config launches a program on each teammate's machine.
 
-Claude Desktop's `claude_desktop_config.json` sits in your user profile instead, and applies machine-wide. The [quickstart](https://modelcontextprotocol.io/quickstart/user) lists the exact path per OS.
+Claude Desktop's `claude_desktop_config.json` sits in your user profile instead, and applies machine-wide. The official guide to [connecting local servers](https://modelcontextprotocol.io/docs/develop/connect-local-servers) lists the exact path per OS.
 
 Rule of thumb: config that describes the project belongs in project scope, committed. Config that describes you belongs in user scope.
 
@@ -169,9 +172,9 @@ flowchart TD
 ```
 
 !!! example "In the wild: Sankshep"
-    [Sankshep](../part0-orientation/running-example.md) ships a setup document for each of these four clients. Same binary, four dialects, including the `servers`-versus-`mcpServers` split.
+    [Sankshep](../part0-orientation/running-example.md) documents setup for each of these four clients in its public [install guide](https://nitinpawar28.github.io/sankshep-docs/install/#point-your-mcp-client-at-it). Same binary, and the same `servers`-versus-`mcpServers` split: its VS Code entry uses the legacy `.vscode/mcp.json`, keyed `servers`, which VS Code still reads.
 
-    That is because in practice the config dialect, not the server, is what varies per user. The gotcha above is confirmed from those shipped docs, not only from vendor pages.
+    That is because in practice the config dialect, not the server, is what varies per user. The split behind the gotcha above shows up in those shipped docs, not only on vendor pages.
 
     The ladder is baked into its defaults too. stdio transport with stderr-only logging, so rung 2 holds by construction and rung 4 always has something to show.
 
@@ -182,11 +185,11 @@ flowchart TD
 **1.** You paste a working Cursor entry into `.vscode/mcp.json`. The JSON is valid, yet no tools appear and no error is shown. Explain what happened.
 
 ??? success "Answer"
-    Cursor's dialect puts servers under `mcpServers`. VS Code reads the top-level key `servers`, with an explicit `type` per entry.
+    Cursor's dialect puts servers under `mcpServers`. VS Code reads `.vscode/mcp.json`, its legacy file, under the top-level key `servers`.
 
-    Unknown top-level keys are ignored, not validated. So the file parses fine, the entry is never read, no subprocess is spawned, and there is nothing to log.
+    At runtime, unknown top-level keys are ignored, not validated. So the file parses fine, the entry is never read, no subprocess is spawned, and there is nothing to log. The only visible sign is VS Code's editor underlining the stray key, and only while the file is open.
 
-    Silence is the expected symptom, not a mysterious one.
+    Silence is the expected symptom, not a mysterious one. The fix is to put the entry in `.mcp.json` at the workspace root, which VS Code reads under `mcpServers`.
 
 **2.** Why does the debugging ladder start with running the server standalone in a terminal, rather than reading client logs?
 
@@ -200,7 +203,7 @@ flowchart TD
 **3.** Your team's repo needs an MCP server that requires an API key. Which file does the entry go in, and where does the key go?
 
 ??? success "Answer"
-    The entry goes in a project-scoped, committable file: `.vscode/mcp.json`, `.mcp.json`, or `.cursor/mcp.json`, depending on the client. Then teammates inherit it on clone.
+    The entry goes in a project-scoped, committable file: `.mcp.json` for VS Code and Claude Code, or `.cursor/mcp.json` for Cursor. Then teammates inherit it on clone.
 
     The key's literal value must not go there. Reference an environment variable by name in the entry's `env` block, and let each user supply the value locally.
 
@@ -219,12 +222,12 @@ flowchart TD
 
 Install the official reference filesystem server into one client, and drive it from chat.
 
-As of 2026-07-18, the npx package is `@modelcontextprotocol/server-filesystem`, published from the official [servers repository](https://github.com/modelcontextprotocol/servers). Verified 2026-07-18.
+As of 2026-10-08, the npx package is `@modelcontextprotocol/server-filesystem`, published from the official [servers repository](https://github.com/modelcontextprotocol/servers). Verified 2026-10-08.
 
 1. Check the prerequisite: `node --version`. The reference server runs on Node.js, and `npx` fetches the package on first launch.
 2. Create a scratch directory to grant access to, such as `~/mcp-sandbox` or `C:\mcp-sandbox`. The directories listed in `args` are the only ones the server may touch.
 3. Pick one client. Open its file from the table, add its dialect of the snippet, and use your scratch directory's absolute path as the final argument.
-4. Restart the client fully. Then confirm the server's tools show up in the client's tools UI.
+4. Restart the client fully, and approve the new server if the client asks. Then confirm the server's tools show up in the client's tools UI.
 5. In chat, ask: "List the files in the sandbox directory, then create `notes.txt` there containing one line: hello from MCP."
 
     Approve the tool calls the client surfaces. That approval prompt is the client, not the model, holding execution authority — a division of labor [Part 4](../part4-agents/agent-loop.md) examines closely.
@@ -238,6 +241,8 @@ If step 4 or 5 fails, match your symptom:
 
     Claude Desktop in particular needs a complete quit, not a closed window.
 
+    Or the server is still waiting for approval. Claude Code shows a project server as pending until you approve it, and VS Code does not start workspace servers in a workspace you have not trusted.
+
 ??? failure "The server never starts"
     Run the exact command from your config in a terminal. That is rung 1 of the ladder.
 
@@ -249,9 +254,11 @@ If step 4 or 5 fails, match your symptom:
     Requests outside the granted list are refused by design.
 
 ??? failure "VS Code: connected, but tools never fire"
-    Switch the chat to Agent mode.
+    Select **Agent** in the chat's agent picker.
 
-    In other modes the tool definitions are never attached to model requests, so no call can ever happen.
+    The selected agent decides which tools are attached to model requests. If the server's tools are not among them, no call can ever happen.
+
+    Then select **Configure Tools** in the chat input, and check that the server's tools are switched on.
 
 When the round trip works, you have exercised every stage of Part 3 in one sitting. A config entry became a subprocess, a tool list, and a model-emitted call that changed a file on your disk.
 

@@ -10,8 +10,8 @@ A **transport** is the mechanism that carries protocol messages between an MCP [
 
 MCP deliberately separates *what* is said from *how* it travels. The JSON-RPC messages are [the wire protocol](wire-protocol.md)'s subject. A `tools/call` message means the same thing over a pipe between two local processes as it does over an HTTP connection to another machine.
 
-!!! warning "Evolving — verified 2026-08-20"
-    As of the 2026-07-28 revision, the MCP specification defines two transports. stdio is the standard for local servers. Streamable HTTP is the current transport for remote servers. An earlier remote transport called HTTP+SSE was deprecated in the 2025-03-26 revision, and formally reclassified as *Deprecated* under the feature lifecycle policy in 2026-07-28. If a tutorial describes a separate SSE endpoint plus a second endpoint for posting messages, it is describing that dead design. This changes quickly; check the [official spec's transports page](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http) for current values.
+!!! warning "Evolving — verified 2026-10-08"
+    As of the 2026-07-28 revision, the MCP specification defines two transports. stdio is the standard for local servers. Streamable HTTP is the current transport for remote servers. An earlier remote transport called HTTP+SSE was deprecated in the 2025-03-26 revision, and formally reclassified as *Deprecated* under the feature lifecycle policy in 2026-07-28. Because it was deprecated before that policy existed, it does not run on the policy's usual twelve-month clock: the [deprecated-features registry](https://modelcontextprotocol.io/specification/2026-07-28/deprecated) gives its earliest removal as three months after SEP-2596, the proposal that adopted the policy, reached Final. That happened in June 2026, so HTTP+SSE is already eligible for removal from a future revision. If a tutorial describes a separate SSE endpoint plus a second endpoint for posting messages, it is describing that dead design. This changes quickly; check the [official spec's transports page](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http) for current values.
 
 The two transports match two deployment shapes. A server that runs *as a subprocess on your machine*, and a server that runs *as a service at a URL*.
 
@@ -163,17 +163,17 @@ An HTTP server sits on a network boundary. So it must verify every caller before
 
 ## In practice: Sankshep
 
-[Sankshep](../part0-orientation/running-example.md) — as of 2026-09-20, at v3.0.0 — ships both transports, and makes the textbook choice for each.
+[Sankshep](../part0-orientation/running-example.md) ships both transports, and makes the textbook choice for each.
 
 The default is stdio, and its logging is stderr-only. That is exactly the reason in the danger box above: stdout carries JSON-RPC, so all diagnostics go to stderr as shipped policy. One binary, launched as a subprocess from an IDE's config file, is the entire local deployment story.
 
 Passing `--http` starts Streamable HTTP in stateless mode. That was a deliberate pairing, since Sankshep's tools are deterministic and independent, so there is no per-client state worth keeping. As of the 2026-07-28 revision, that choice stopped being a choice: statelessness is what the protocol now requires of everyone.
 
-Two further choices preview the security posture. The HTTP listener is loopback-bound, so out of the box it accepts connections only from the same machine. And it is fail-closed: it refuses unauthenticated requests from non-loopback addresses unless the operator explicitly sets `SANKSHEP_ALLOW_UNAUTHENTICATED=1`.
+Two further choices preview the security posture. The HTTP listener is loopback-bound, so out of the box it accepts connections only from the same machine. And it is fail-closed: bound to a non-loopback address with no authentication configured, it refuses to start unless the operator explicitly sets `SANKSHEP_ALLOW_UNAUTHENTICATED=1`.
 
 Exposure requires an explicit, greppable decision. Silence defaults to safe.
 
-The auth split matches the transport split, recorded in ADR-0012. The stdio path uses environment credentials and no OAuth at all. The HTTP tier acts as an OAuth 2.1 resource server: it validates tokens, never issues them, and never passes them through.
+The auth split matches the transport split, recorded in ADR-0012. The stdio path uses environment credentials and no OAuth at all. Over HTTP, authentication comes in two modes, both on Sankshep's public [security page](https://nitinpawar28.github.io/sankshep-docs/security/#network-exposure-http-mode). Bearer API keys are the mode that page recommends for a LAN or cluster. In OAuth 2.1 mode, Sankshep acts as a resource server: it validates your identity provider's tokens, never issues them, and never passes them through.
 
 What those properties mean, and the attack they prevent, is the subject of [safety and judgment](../part4-agents/safety.md).
 

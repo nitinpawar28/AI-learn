@@ -152,10 +152,10 @@ A declined elicitation is a normal outcome, not an error. Users say no, and a to
 
 And an elicitation request is server-authored text shown to a human, which makes it an attack surface. [Safety and judgment](../part4-agents/safety.md) covers why a prompt asking the user to paste an API key deserves suspicion.
 
-!!! warning "Evolving — verified 2026-08-20"
+!!! warning "Evolving — verified 2026-10-08"
     The 2026-07-28 revision changes this chapter in four ways. Status and governance are in [What problem MCP solves](why-mcp.md).
 
-    **Roots** and **Sampling** are now *deprecated*. The suggested migrations are to pass directories via tool parameters, resource URIs, or server configuration instead of Roots, and to integrate with an LLM provider API directly instead of Sampling.
+    **Roots**, **Sampling**, and the **Logging** utility are now *deprecated*, all three by the same proposal, SEP-2577. The [deprecated-features registry](https://modelcontextprotocol.io/specification/2026-07-28/deprecated) gives each the same earliest removal: the first revision released on or after 2027-07-28. The suggested migrations are to pass directories via tool parameters, resource URIs, or server configuration instead of Roots; to integrate with an LLM provider API directly instead of Sampling; and, instead of Logging, to log to stderr on stdio — the rule [Transports](transports.md) teaches anyway — or to use OpenTelemetry.
 
     **Async tasks** moved out of the core protocol into an official extension, `io.modelcontextprotocol/tasks`, redesigned around polling.
 
@@ -167,7 +167,7 @@ And an elicitation request is server-authored text shown to a human, which makes
 
 ??? info "Going deeper — Roots and Sampling, and why they are leaving"
 
-    Two features you will meet in older servers and tutorials are on their way out. Both are instructive, because each was removed for the same reason the protocol went stateless.
+    Two of the three features on their way out are worth a closer look. You will meet both in older servers and tutorials, and both are instructive. SEP-2577, the proposal that deprecated them, notes that few clients ever implemented either one, and that each has a more direct alternative.
 
     **Roots** let a client tell a server which directories were in scope: "this project lives at `file:///home/me/app`".
 
@@ -185,7 +185,7 @@ And an elicitation request is server-authored text shown to a human, which makes
 
 ## In practice: Sankshep
 
-Sankshep — [the running example](../part0-orientation/running-example.md) — is a clean test of the sorting question, because as of v1.8.0 it uses all three primitives.
+Sankshep — [the running example](../part0-orientation/running-example.md) — is a clean test of the sorting question, because it uses all three primitives.
 
 ```mermaid
 flowchart TB

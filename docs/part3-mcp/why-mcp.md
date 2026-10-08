@@ -9,7 +9,7 @@ By the end you will be able to:
 - explain why bespoke integrations scale as N×M while a shared protocol scales as N+M;
 - use the protocol's vocabulary — host, client, server, capability — precisely;
 - state what MCP is *not*, which heads off the most common misconceptions;
-- say where the protocol stands as of 2026-08-20: specification revision, governance, and SDKs.
+- say where the protocol stands as of 2026-10-08: specification revision, governance, and SDKs.
 
 This chapter is the "why". The rest of Part 3 zooms in on the what ([primitives](primitives.md)), the how ([transports](transports.md), [the wire protocol](wire-protocol.md)), and the doing ([writing a server](writing-a-server.md), [IDE integration](ide-integration.md)).
 
@@ -17,7 +17,7 @@ This chapter is the "why". The rest of Part 3 zooms in on the what ([primitives]
 
 Picture the scene before any shared protocol.
 
-On one side, AI coding assistants: VS Code's agent mode, Claude Code, Claude Desktop, Cursor. On the other, tools they would be more useful with: a code-search index, an issue tracker, a database, an internal wiki.
+On one side, AI coding assistants: VS Code's agents, Claude Code, Claude Desktop, Cursor. On the other, tools they would be more useful with: a code-search index, an issue tracker, a database, an internal wiki.
 
 Connecting any pair means writing an integration. How the assistant reaches the tool. How it asks what the tool offers. How it passes arguments, and gets results and errors back.
 
@@ -166,28 +166,30 @@ Four boundary lines prevent most misconceptions.
 
 A protocol is a bet that both sides of an ecosystem will keep implementing it. So its status and stewardship are engineering inputs, not trivia.
 
-!!! warning "Evolving — verified 2026-08-20"
-    The current MCP specification revision is **2026-07-28**. It is the largest revision since the protocol launched, and the one this site teaches. It shipped stable with same-day SDK support in TypeScript, Python, Go, and C#. The previous revision, 2025-11-25, is now *final*: unchanging, and still spoken by plenty of deployed software. Governance moved in December 2025, when Anthropic donated MCP to the **Agentic AI Foundation** under the Linux Foundation, with Anthropic, Block, and OpenAI as co-founders. This changes quickly; check [the official specification site](https://modelcontextprotocol.io/) and its [versioning page](https://modelcontextprotocol.io/specification/versioning) for current values.
+!!! warning "Evolving — verified 2026-10-08"
+    The current MCP specification revision is **2026-07-28**. It is the largest revision since the protocol launched, and the one this site teaches. It shipped stable with same-day SDK support in TypeScript, Python, Go, and C#. The previous revision, 2025-11-25, is now *final*: unchanging, and still spoken by plenty of deployed software. Governance moved in December 2025, when Anthropic donated MCP to the **Agentic AI Foundation** under the Linux Foundation, with Anthropic, Block, and OpenAI as co-founders. This changes quickly; check [the official specification site](https://modelcontextprotocol.io/) and its [versioning page](https://modelcontextprotocol.io/docs/learn/versioning) for current values.
 
 Three takeaways.
 
 First, spec revisions are dated snapshots, named for the last date a backwards-incompatible change landed. Every request declares which revision it speaks, and [the wire protocol](wire-protocol.md) shows exactly where. So a large revision can land without stranding existing software.
 
-Second, "backwards-incompatible" is not a euphemism here. The 2026-07-28 revision deleted the session handshake and made the protocol stateless. A server written against 2025-11-25 and a client written against 2026-07-28 do not interoperate by accident. Both revisions define explicit fallback probes for exactly that reason.
+Second, "backwards-incompatible" is not a euphemism here. The 2026-07-28 revision deleted the session handshake and made the protocol stateless. A server written against 2025-11-25 and a client written against 2026-07-28 do not interoperate by accident. The newer revision defines explicit fallback probes for exactly that reason.
 
 Third, a protocol owned by a neutral foundation, with competing vendors as co-founders, is hard for any single company to abandon or capture. That is the strongest signal available for the bet.
 
 !!! note "Settled"
-    Since 2026-07-28 the protocol carries a formal **feature lifecycle policy**. A feature moves Active, then Deprecated, then Removed. It must sit Deprecated for at least twelve months before it is eligible for removal.
+    Since 2026-07-28 the protocol carries a formal **feature lifecycle policy**. A feature moves Active, then Deprecated, then Removed. Normally it must sit Deprecated for at least twelve months before it is eligible for removal.
+
+    [The policy](https://modelcontextprotocol.io/community/feature-lifecycle) allows one shortcut: a feature that poses an active security risk can be removed after as little as ninety days, with Core Maintainer approval. And features deprecated before the policy existed were reclassified under transition provisions, with clocks of their own. [Transports](transports.md) covers the one you are most likely to meet.
 
     So deprecation is now an announced state, with a published migration path and a [registry](https://modelcontextprotocol.io/specification/2026-07-28/deprecated). It is not a silent breakage.
 
-    When you read that Roots or Sampling is deprecated in [primitives](primitives.md), that is what the word means. Still functional, documented as leaving, and safe to keep running while you migrate.
+    When you read that Roots, Sampling, or Logging is deprecated in [primitives](primitives.md), that is what the word means. Still functional, documented as leaving, and safe to keep running while you migrate.
 
 The SDK picture tells the same story from the tooling side.
 
-!!! warning "Evolving — verified 2026-08-20"
-    Official MCP SDKs cover ten languages in three tiers of maintenance and feature-completeness. Tier 1: TypeScript, Python, C#, Go. Tier 2: Java, Rust. Tier 3: Swift, Ruby, PHP, Kotlin. All four Tier 1 SDKs shipped 2026-07-28 support on the revision's publication day, in new major versions. The TypeScript SDK split into `@modelcontextprotocol/server` and `@modelcontextprotocol/client`, and the Python SDK renamed its server class from `FastMCP` to `MCPServer`. This changes quickly; check [the official SDK list](https://modelcontextprotocol.io/docs/sdk) for current values.
+!!! warning "Evolving — verified 2026-10-08"
+    Official MCP SDKs cover ten languages in three tiers of maintenance and feature-completeness. Tier 1: TypeScript, Python, C#, Go, Rust, Ruby. Tier 2: Java. Tier 3: Swift, PHP, Kotlin. The four SDKs that were Tier 1 when the 2026-07-28 revision was published had support for it on publication day: TypeScript, Python, and C# in new 2.0.0 major versions, and Go in v1.7.0, a minor release. Rust and Ruby have since been promoted to Tier 1. The TypeScript SDK split into `@modelcontextprotocol/server` and `@modelcontextprotocol/client`, and the Python SDK renamed its server class from `FastMCP` to `MCPServer`. This changes quickly; check [the official SDK list](https://modelcontextprotocol.io/docs/sdk) for current values.
 
 Tier 1 means first-class: actively maintained, and feature-complete against the current spec. Lower tiers trail it.
 

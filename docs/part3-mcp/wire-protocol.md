@@ -30,8 +30,8 @@ That is the whole grammar. Everything else in MCP is a vocabulary of method name
 
 ## Every request introduces itself
 
-!!! warning "Evolving — verified 2026-08-20"
-    The current MCP revision is `"2026-07-28"`, and that is the `protocolVersion` string in every example below. It removed the opening handshake and made the protocol stateless. The previous revision, `2025-11-25`, is final and still widely deployed, and it appears in the compatibility block at the end of this section. This changes quickly; check [modelcontextprotocol.io/specification/versioning](https://modelcontextprotocol.io/specification/versioning) for current values.
+!!! warning "Evolving — verified 2026-10-08"
+    The current MCP revision is `"2026-07-28"`, and that is the `protocolVersion` string in every example below. It removed the opening handshake and made the protocol stateless. The previous revision, `2025-11-25`, is final and still widely deployed, and it appears in the compatibility block at the end of this section. This changes quickly; check [the specification's versioning page](https://modelcontextprotocol.io/docs/learn/versioning) for current values.
 
 There is no handshake.
 
@@ -197,9 +197,9 @@ sequenceDiagram
 
     Compare the two designs and the trade-off is clear. The handshake negotiated once, and spread that cost over a long-lived session. But it made every connection stateful, which is what made remote servers hard to scale. Per-request `_meta` re-sends the same facts on every call, and buys back statelessness.
 
-    **Bridging the two.** On Streamable HTTP, a client can tell them apart by status code.
+    **Bridging the two.** On Streamable HTTP, a client can tell them apart from the error response: a `400` whose body carries no recognized modern error means a handshake-era server.
 
-    On [stdio](transports.md) there are no status codes. So a client supporting both **should** send `server/discover` first. A modern server answers it. A handshake-era server returns a "method not found" error, at which point the client falls back to `initialize`.
+    On [stdio](transports.md) there are no status codes. So a client supporting both **should** send `server/discover` first. A modern server answers it with the versions it supports. Or, if it does not speak the requested version, it returns a recognized modern error such as `UnsupportedProtocolVersionError`, and the client retries with a version the server listed rather than falling back. A handshake-era server returns any other error, commonly "method not found", or does not answer within a reasonable timeout. Then the client falls back to `initialize`. The specification forbids keying that fallback to one error code, because handshake-era servers differ in which one they send.
 
     That is the sanctioned probe. It is also why `server/discover` is mandatory for servers, even though calling it is optional for clients.
 
@@ -464,13 +464,13 @@ The visible symptom is "server didn't start", reported nowhere near the print th
 
 ## In practice: Sankshep
 
-Sankshep speaks exactly this dialect. [stdio](transports.md) by default, stdout carrying only JSON-RPC frames, all logging on stderr. That is the previous section's discipline enforced as policy, not luck.
+Sankshep follows exactly this framing. [stdio](transports.md) by default, stdout carrying only JSON-RPC frames, all logging on stderr. That is the previous section's discipline enforced as policy, not luck.
 
 Its error handling picks the channels deliberately. Under ADR-0016, tool paths anchor to the repo root. A path that matches nothing fails loudly as a tool error, with `isError: true`, instead of silently returning an empty result.
 
 So the model sees the miss and can correct the path. That is exactly the retry loop the two-channel design exists for.
 
-And the wire doubles as the test interface. Under ADR-0008, the eval harness launches the real server binary as a subprocess and drives it with the same `tools/list` and `tools/call` JSON-RPC you have been reading, rather than importing internal libraries.
+And the wire doubles as the test interface. Under ADR-0008, the eval harness launches the real server binary as a subprocess and drives it with the same `tools/list` and `tools/call` methods you have been reading, rather than importing internal libraries.
 
 What the benchmarks measure is what an IDE client receives, byte for byte.
 
@@ -529,15 +529,15 @@ What the benchmarks measure is what an IDE client receives, byte for byte.
 Be the client for one session, by hand, against any stdio MCP server. Use the reference filesystem server from [Connecting servers to IDEs](ide-integration.md), or the one you will write in [Build your own MCP server](../part6-reference/build-your-own.md).
 
 1. Launch the server directly in a terminal. It sits silently waiting on stdin, which is correct behavior, as [Transports](transports.md) showed.
-2. Send the compatibility probe first. Paste this as one line and press Enter. The `protocolVersion` string was verified current on 2026-08-20.
+2. Send the compatibility probe first. Paste this as one line and press Enter. The `protocolVersion` string was verified current on 2026-10-08.
 
     ```json
     {"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"hand-typed","version":"0.0.1"},"io.modelcontextprotocol/clientCapabilities":{}}}}
     ```
 
-    **You learn something either way.** A result listing `supportedVersions` means you are talking to a 2026-07-28-era server, so carry on to step 3.
+    **You learn something whatever comes back.** A result listing `supportedVersions` means you are talking to a 2026-07-28-era server, so carry on to step 3. An `UnsupportedProtocolVersionError` also comes from a modern server, one that does not speak the version you sent: retry with a version it lists.
 
-    A `-32601` "method not found" error means this server predates the revision. You have just run the stdio fallback probe by hand. Continue with the legacy handshake instead:
+    Any other error — commonly `-32601` "method not found" or `-32602` — or no reply within a few seconds means this server predates the revision. You have just run the stdio fallback probe by hand. Continue with the legacy handshake instead:
 
     ```json
     {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"hand-typed","version":"0.0.1"}}}

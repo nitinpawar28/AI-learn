@@ -113,12 +113,12 @@ A production example follows in a moment. The full design rationale is in the ca
 
 Is the churn threat real? Look at the official C# SDK's release feed.
 
-!!! warning "Evolving — verified 2026-09-20"
+!!! warning "Evolving — verified 2026-10-08"
     The official C# SDK ships on NuGet as `ModelContextProtocol`, with `ModelContextProtocol.Core` and `ModelContextProtocol.AspNetCore` variants. It is maintained in the MCP organization together with Microsoft. The 2.x line is GA — 2.0.0, 2.1.0 and 2.2.0 are all released — and 1.x is a generation behind. This changes quickly; check the [NuGet package page](https://www.nuget.org/packages/ModelContextProtocol) for current values.
 
 Read that box as an argument, not just a version report.
 
-**The major-version migration already happened.** When this chapter was first written the feed held a stable 1.4.1 alongside a 2.0 preview, and the point being made was that the migration was coming. It came: 2.x went GA and then moved twice more, to 2.1.0 and 2.2.0, inside two months. That is the tempo a protocol SDK sets, and it is why the boundary this chapter is about matters — a dependency that moves this fast is one you want touching as few of your projects as possible.
+**The major-version migration already happened.** When this chapter was first written the feed held a stable 1.4.1 alongside a 2.0 preview, and the point being made was that the migration was coming. It came: 2.x went GA and then moved twice more, to 2.1.0 and 2.2.0, within sixteen days. That is the tempo a protocol SDK sets, and it is why the boundary this chapter is about matters — a dependency that moves this fast is one you want touching as few of your projects as possible.
 
 Whether it costs you an afternoon or a quarter depends on which side of a fence your SDK reference lives.
 
