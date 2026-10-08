@@ -55,8 +55,8 @@ That is the anatomy from [Writing an MCP server](../part3-mcp/writing-a-server.m
 
 ## Setup
 
-!!! warning "Evolving — verified 2026-08-20"
-    Package names, versions, and API shapes on this page were checked against the official [server quickstart](https://modelcontextprotocol.io/quickstart/server), the [Python SDK migration guide](https://py.sdk.modelcontextprotocol.io/migration/), and the [TypeScript SDK repository](https://github.com/modelcontextprotocol/typescript-sdk) on 2026-08-20. This page targets the **v2 SDKs**, which shipped alongside the 2026-07-28 specification revision. Python: PyPI package `mcp`, server class `MCPServer` (v1 called it `FastMCP`; pin `mcp>=1.28,<2` if you must stay on v1). The code below imports from the fully-qualified module, `mcp.server.mcpserver`, as the migration guide documents; the SDK's quickstart shows a shorter re-export, `from mcp.server import MCPServer`. Either should work — if one raises `ImportError`, use the other. Likewise, the `Context` parameter on resource and prompt handlers is documented as required in v2, but harmless if your version treats it as optional. TypeScript: the monolithic `@modelcontextprotocol/sdk` split into `@modelcontextprotocol/server` and `@modelcontextprotocol/client`, with schema validation via any Standard Schema library — Zod v4 here. This changes quickly; check those links for current values.
+!!! warning "Evolving — verified 2026-10-08"
+    Package names, versions, and API shapes on this page were checked against the official [server quickstart](https://modelcontextprotocol.io/docs/2026-07-28/develop/build-server), the [Python SDK migration guide](https://py.sdk.modelcontextprotocol.io/migration/), and the [TypeScript SDK repository](https://github.com/modelcontextprotocol/typescript-sdk) on 2026-10-08. This page targets the **v2 SDKs**, which shipped alongside the 2026-07-28 specification revision. Python: PyPI package `mcp`, server class `MCPServer` (v1 called it `FastMCP`; pin `mcp>=1.28,<2` if you must stay on v1). The code below imports from the fully-qualified module, `mcp.server.mcpserver`, as the migration guide documents; the SDK's quickstart shows a shorter re-export, `from mcp.server import MCPServer`. Either should work — if one raises `ImportError`, use the other. In v2, a resource with a fixed URI must not declare a `Context` parameter — the decorator raises `ValueError` — while a prompt handler receives one only if it declares it. TypeScript: the monolithic `@modelcontextprotocol/sdk` split into `@modelcontextprotocol/server` and `@modelcontextprotocol/client`, with schema validation via any Standard Schema library — Zod v4 here. This changes quickly; check those links for current values.
 
 Both SDKs sit in the top tier of the official SDK support matrix, which [What problem MCP solves](../part3-mcp/why-mcp.md) tracks.
 
@@ -266,13 +266,13 @@ That string is written for a model to act on. The break-it section revisits the 
 
 Tools are the model's to call. A [resource](../part3-mcp/primitives.md) belongs to the application: the client can read it, show it in a UI, or attach it to a conversation, but the model never calls it spontaneously. Add this block above the entry point (the rest of the file is unchanged — it stays runnable after every pass).
 
-Python readers: widen the import line to `from mcp.server.mcpserver import Context, MCPServer`. In the v2 SDK a resource handler must accept a `Context` parameter — registering one without it raises `ValueError` — even when, as here, the handler never uses it.
+Python readers: this handler takes no parameters, and in the v2 SDK it must not. The SDK injects a `Context` only into resource templates — URIs with `{...}` variables — so declaring `ctx: Context` on a fixed URI like `notes://stats` raises `ValueError` the moment the decorator runs.
 
 === "Python"
 
     ```python
     @mcp.resource("notes://stats")
-    def stats(ctx: Context) -> str:
+    def stats() -> str:
         """Note counts by category."""
         notes = _load()
         counts: dict[str, int] = {}
@@ -307,13 +307,13 @@ Reading it has no side effects and costs nothing, so it is safe for a client to 
 
 The third primitive is a [prompt](../part3-mcp/primitives.md): a template the *user* picks by name, which the server expands into a message for the model. Note what the code does not do — it builds a string from stored data, deterministically. It asks a question; it does not answer one. Add this block above the entry point.
 
-Python readers: add `from mcp.server.mcpserver.prompts.base import UserMessage`. A v2 prompt handler returns a list of message objects rather than a bare string. That makes the multi-message case expressible in the same shape as the single-message one — a system framing plus a user question, say.
+Python readers: add `from mcp.server.mcpserver.prompts.base import UserMessage`. A v2 prompt handler may return a bare string, which the SDK wraps as one user message. Returning a list of message objects instead keeps the multi-message case in the same shape as the single-message one — an example exchange of user and assistant turns before the real question, say.
 
 === "Python"
 
     ```python
     @mcp.prompt()
-    def summarize_notes(ctx: Context) -> list[UserMessage]:
+    def summarize_notes() -> list[UserMessage]:
         """Ask for a briefing built from every note on record."""
         listing = "\n".join(f"- [{n['category']}] {n['text']}" for n in _load())
         return [UserMessage(content=(
@@ -356,7 +356,7 @@ That completes the server: three primitives, one file, all storage in `notes.jso
         from datetime import datetime, timezone
         from pathlib import Path
 
-        from mcp.server.mcpserver import Context, MCPServer
+        from mcp.server.mcpserver import MCPServer
         from mcp.server.mcpserver.prompts.base import UserMessage
 
         mcp = MCPServer("repo-notes")
@@ -392,7 +392,7 @@ That completes the server: three primitives, one file, all storage in `notes.jso
 
 
         @mcp.resource("notes://stats")
-        def stats(ctx: Context) -> str:
+        def stats() -> str:
             """Note counts by category."""
             notes = _load()
             counts: dict[str, int] = {}
@@ -403,13 +403,17 @@ That completes the server: three primitives, one file, all storage in `notes.jso
 
 
         @mcp.prompt()
-        def summarize_notes(ctx: Context) -> list[UserMessage]:
+        def summarize_notes() -> list[UserMessage]:
             """Ask for a briefing built from every note on record."""
             listing = "\n".join(f"- [{n['category']}] {n['text']}" for n in _load())
             return [UserMessage(content=(
                 "Summarize the project notes below into a short briefing. "
                 "Group them by category and keep every decision.\n\n"
                 + (listing or "(no notes yet)")))]
+
+
+        if __name__ == "__main__":
+            mcp.run(transport="stdio")
         ```
 
     === "TypeScript"
@@ -526,14 +530,14 @@ Read that second response slowly. You are reading the exact description strings 
 
 Notice what you did *not* have to send first. There is no session to open, because [the 2026-07-28 revision](../part3-mcp/wire-protocol.md) made every request self-describing.
 
-Finish with a real call.
+Finish with a real call. The same `_meta` block rides along — leave it off and the server must reject the request as malformed, with error `-32602` ([the specification's per-request fields](https://modelcontextprotocol.io/specification/2026-07-28/basic#_meta)).
 
 ```json
-{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"remember_note","arguments":{"text":"Deploys happen from main only, never from feature branches.","category":"decision"}}}
+{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"remember_note","arguments":{"text":"Deploys happen from main only, never from feature branches.","category":"decision"},"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"hand-typed","version":"0.0.1"},"io.modelcontextprotocol/clientCapabilities":{}}}}
 ```
 
 ```json
-{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"recall_notes","arguments":{"query":"deploy"}}}
+{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"recall_notes","arguments":{"query":"deploy"},"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"hand-typed","version":"0.0.1"},"io.modelcontextprotocol/clientCapabilities":{}}}}
 ```
 
 Now check `notes.json`. Your hand-typed JSON just became data on disk, with no model anywhere in sight.
@@ -552,7 +556,7 @@ Use your project's absolute path, and restart the client fully after editing.
 
     ```json
     {
-      "servers": {
+      "mcpServers": {
         "repo-notes": {
           "type": "stdio",
           "command": "uv",
@@ -594,6 +598,7 @@ Use your project's absolute path, and restart the client fully after editing.
     {
       "mcpServers": {
         "repo-notes": {
+          "type": "stdio",
           "command": "uv",
           "args": ["--directory", "/absolute/path/to/repo-notes", "run", "server.py"]
         }
@@ -604,7 +609,7 @@ Use your project's absolute path, and restart the client fully after editing.
 Running the TypeScript version instead? Swap the launch in any dialect: `"command": "npx"`, `"args": ["tsx", "/absolute/path/to/repo-notes/server.ts"]`.
 
 !!! warning "The gotcha, one last time"
-    VS Code is the odd one out: top-level key `servers` (not `mcpServers`), an explicit `"type"` on each entry, and tools that fire only in Agent mode. Paste the Cursor dialect into `.vscode/mcp.json` and the symptom is silence — valid JSON parked under a key VS Code never reads. [Connecting servers to IDEs](../part3-mcp/ide-integration.md) owns the details and the fix.
+    Save the VS Code block as `.mcp.json` at the workspace root. VS Code's older `.vscode/mcp.json` expects `servers`, not `mcpServers`, so do not paste this block there. [Connecting servers to IDEs](../part3-mcp/ide-integration.md) owns the details and the fix.
 
 Once connected, ask your assistant: *"Remember that deploys happen from main only. Then tell me what we've decided about deploys."* Approve the calls the client surfaces and watch both tools fire. You have now seen the same path twice. Once with you as the client, once with software in your seat:
 
@@ -665,11 +670,11 @@ The sampled `tool_use` blocks start skipping the tool. Or they reach for it with
 
     And the substring search is not something you would outgrow. Sankshep's recall is a SQL `LIKE` over a SQLite facts table, with facts never embedded, for the right-sizing reasons [Persistent memory](../part2-context/persistent-memory.md) taught. `notes://stats` mirrors `sankshep://stats`, and `summarize_notes` is a toy `compose_task_prompt`: both build their text deterministically, and under ADR-0013 Sankshep's composer is barred from calling any model by a build-time test. The disciplines transfer too.
 
-stdio with stderr-only logging is its default. And under ADR-0016, a path that matches nothing fails loudly as a tool error with actionable text.
+    stdio with stderr-only logging is its default. And under ADR-0016, a path that matches nothing fails loudly as a tool error with actionable text.
 
-That is experiment 2's lesson, enforced as policy. Building in C#? The same three registrations exist in the official C# SDK, covered in [Writing an MCP server](../part3-mcp/writing-a-server.md).
+    That is experiment 2's lesson, enforced as policy. Building in C#? The same three registrations exist in the official C# SDK, covered in [Writing an MCP server](../part3-mcp/writing-a-server.md).
 
-So does the reason Sankshep confines that SDK to a single project, behind [a dependency fence](../part5-capstone/case-dependency-fence.md).
+    So does the reason Sankshep confines that SDK to a single project, behind [a dependency fence](../part5-capstone/case-dependency-fence.md).
 
 ## Where next
 
@@ -696,7 +701,7 @@ So does the reason Sankshep confines that SDK to a single project, behind [a dep
     ??? success "Answer"
         Embeddings earn their cost when wording diverges from the query — paraphrased prose, large corpora, semantic neighbors — the retrieval problem of [Retrieval for code](../part2-context/rag-for-code.md). Notes are short factual sentences, recalled by words the user remembers writing, over a corpus of dozens.
 
-So substring match finds what embeddings would. Minus a model download, an index to maintain, and a failure mode. Match the mechanism to the data: the right-sizing argument from [Persistent memory](../part2-context/persistent-memory.md).
+        So substring match finds what embeddings would. Minus a model download, an index to maintain, and a failure mode. Match the mechanism to the data: the right-sizing argument from [Persistent memory](../part2-context/persistent-memory.md).
 
 4. **In the hand-typed session, one paste misspells the method name (`"method": "tools/cal"`) and another sends `recall_notes` a query matching nothing. Which failure channel answers each, and why are they different?**
 
@@ -705,7 +710,7 @@ So substring match finds what embeddings would. Minus a model download, an index
 
         So the reply travels the protocol-error channel: a JSON-RPC `error` object, code `-32601`, method not found. It is aimed at client software, because the request itself was broken. The no-match query runs your handler successfully, and returns an ordinary `result`. Not even `isError: true`, since a search that finds nothing is a search that worked.
 
-Its text is written for the model to act on. Two channels, two audiences, as [The wire protocol](../part3-mcp/wire-protocol.md) laid out.
+        Its text is written for the model to act on. Two channels, two audiences, as [The wire protocol](../part3-mcp/wire-protocol.md) laid out.
 
 5. **After experiment 3 ships by accident, no test fails and no log line changes. What actually broke, and where is the only place it can show up?**
 
