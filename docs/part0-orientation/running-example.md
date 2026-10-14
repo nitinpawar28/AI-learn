@@ -19,7 +19,7 @@ There is a second benefit. If you ever have to explain a system you built, in a 
 !!! example "In the wild: Sankshep"
     The running example is **Sankshep**. Five sentences describe it.
 
-    1. As of 2026-09-20, Sankshep is at version 3.0.0: a server for the Model Context Protocol (MCP), written in C# on .NET 10. An MCP server is a program that offers tools to AI coding assistants over a standard protocol, and [Part 3](../part3-mcp/why-mcp.md) explains that protocol properly.
+    1. As of 2026-10-14, Sankshep is at version 4.0.0, published 2026-10-13: a server for the Model Context Protocol (MCP), written in C# on .NET 10. An MCP server is a program that offers tools to AI coding assistants over a standard protocol, and [Part 3](../part3-mcp/why-mcp.md) explains that protocol properly.
     2. Its tagline is its thesis: "Maximum context, minimum tokens — with the benchmarks to prove it."
     3. Its job is to sit beside a code repository and hand curated context to whatever assistant asks. It retrieves the relevant files, compresses them structurally, remembers project facts, and measures how much the compression removed.
     4. It is local-first. Embeddings are computed on your own machine with a local ONNX model, vectors live in SQLite via sqlite-vec, and it sends no telemetry by default.
@@ -27,8 +27,8 @@ There is a second benefit. If you ever have to explain a system you built, in a 
 
     That fifth sentence matters for this site. The next section explains why.
 
-!!! warning "Evolving — verified 2026-10-08"
-    The version above is still the current release: it is the newest on [nuget.org](https://www.nuget.org/packages/Sankshep), and the one Sankshep's [public changelog](https://nitinpawar28.github.io/sankshep-docs/changelog/) names as current. Version 4.0.0 is built but not yet published. Where a page teaches a change from 4.0.0, it says so on the spot, as built and not yet published; everything else on this site describes 3.0.0, apart from passages labelled as history. This changes quickly; check [nuget.org](https://www.nuget.org/packages/Sankshep) for current values.
+!!! warning "Evolving — verified 2026-10-14"
+    The version above is the current release: it is the newest on [nuget.org](https://www.nuget.org/packages/Sankshep), published 2026-10-13, and the release whose changelog ships inside the package. Everything on this site describes 4.0.0, apart from passages labelled as history and the published benchmark figures, which were measured on 3.0.0 and say so. This changes quickly; check [nuget.org](https://www.nuget.org/packages/Sankshep) for current values.
 
 ## The ground rules
 

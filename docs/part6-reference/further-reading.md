@@ -44,7 +44,7 @@ Second, the list is deliberately short. Primary sources and official documentati
 
 - [Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — Anthropic's engineering guidance; it names "context rot" and makes the vendor's own case for the thesis of [Part 2](../part2-context/index.md): curate the window, don't fill it. *Verified 2026-07-18.*
 
-The measured numbers in Part 2 — recall held against compression — come from [Sankshep's public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/), which also publishes the method, the judge's run-to-run spread, and its own stated limits. *Verified 2026-10-08.*
+The measured numbers in Part 2 — recall held against compression — come from [Sankshep's public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/), which also publishes the method, the judge's run-to-run spread, and its own stated limits. *Verified 2026-10-14.*
 
 [Measuring context quality](../part2-context/measuring-quality.md) presents them together with the method and its caveats.
 
@@ -102,7 +102,7 @@ The measured numbers in Part 2 — recall held against compression — come from
 
 Part 5 is grounded differently from the rest of the site.
 
-Its evidence base is Sankshep's own architecture decision records, and its [public documentation](https://nitinpawar28.github.io/sankshep-docs/), from the architecture and security pages to the benchmarks and the changelog. Both are discussed throughout the case studies, with the facts last re-checked on 2026-10-08.
+Its evidence base is Sankshep's own architecture decision records, and its [public documentation](https://nitinpawar28.github.io/sankshep-docs/), from the architecture and security pages to the benchmarks and the changelog. Both are discussed throughout the case studies, with the facts last re-checked on 2026-10-08 and every passage the 4.0.0 release changed re-checked against its changelog on 2026-10-14.
 
 Sankshep's source is private, so there is no repository to link. [The running example](../part0-orientation/running-example.md) explains the arrangement, and the redaction rule this site follows.
 

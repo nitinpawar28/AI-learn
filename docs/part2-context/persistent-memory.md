@@ -119,7 +119,7 @@ The store is plain SQLite in WAL mode, with a single `facts` table holding the s
 
 That is the right-sizing argument made concrete. Sankshep already ships an ONNX embedding pipeline and a sqlite-vec index for *code* retrieval. Memory still uses SQL `LIKE`, because one-sentence facts do not have the paraphrase problem embeddings solve.
 
-In 4.0.0, built but not yet published as of 2026-10-08, the granularity axis becomes a limit the tool enforces. `remember` refuses `text` over 4,000 characters, a `category` over 64 and a `source` over 2,048. The release's changelog gives the reason: a fact cannot be deleted, so an oversized one would be paid for again in every later recall, composed prompt or `DECISIONS.md` it lands in. The remedy is this chapter's: store the decision, and point `source` at the file.
+Since 4.0.0, published 2026-10-13, the granularity axis is a limit the tool enforces. `remember` refuses `text` over 4,000 characters, a `category` over 64 and a `source` over 2,048. The release's changelog gives the reason: a fact cannot be deleted, so an oversized one would be paid for again in every later recall, composed prompt or `DECISIONS.md` it lands in. The remedy is this chapter's: store the decision, and point `source` at the file.
 
 Scoping is per-branch. The branch is read directly from the repository's `.git/HEAD` file rather than by shelling out to git, and recall returns facts for the current branch plus `global` ones. So a note recorded mid-refactor stays on its feature branch.
 

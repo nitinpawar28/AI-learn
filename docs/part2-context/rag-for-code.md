@@ -152,6 +152,19 @@ with file:line locators"])
     BLEND --> RANK
 ```
 
+??? info "Going deeper — normalizing a rank you collapsed"
+
+    Some tools rank whole files rather than chunks, and borrow their semantic signal from a chunk index. The usual move is to collapse the chunk hits to files, keeping each file's best chunk. That collapse changes what a position means: a file's position in the chunk list is not its rank among files. Normalize the chunk position by the number of distinct files, and scores can go negative. Here fifty chunk hits collapse to four files. Each file scores 1 − n ÷ 4, where n is either its best chunk's position (the bug) or its rank among the files (the fix):
+
+    | File | Best chunk's position | File rank | Score from chunk position (bug) | Score from file rank (fix) |
+    |---|---|---|---|---|
+    | A | 0 | 0 | 1.00 | 1.00 |
+    | B | 3 | 1 | 0.25 | 0.75 |
+    | C | 12 | 2 | −2.00 | 0.50 |
+    | D | 40 | 3 | −9.00 | 0.25 |
+
+    A file the semantic search never found scores a clean 0. So C and D, which it *did* find, now score below files it never found: the blend has turned weak evidence into a penalty. The fix is to renumber the collapsed files densely — 0, 1, 2, … in order of each file's best chunk — and divide by the same file count. Then test with several chunks per file. A test with one hit per file makes chunk positions and file ranks coincide, so it passes with the bug in place.
+
 ## Reranking: a second, slower opinion
 
 Hybrid ranking has a structural weakness that no blend weight can fix.
@@ -246,10 +259,10 @@ Sankshep splits this pipeline across its tools, and its choices map closely onto
 
 - *Chunking* of source code is AST symbol-aware, with a size limit set by what the embedding model can actually read rather than by line count. A type too large for that is split by member, and anything still too large is split into overlapping windows. That rule replaced a 400-line limit in 2.0.0. The embedding model reads only the first 512 tokens of a chunk, so a 400-line class had been indexed by a vector describing roughly its first thirty lines — the [maximum-input-length trap](../part1-fundamentals/embeddings.md#choosing-a-model), in production. Changing the rule rebuilt every index once.
 - *Chunk identity* is a SHA-256 hash of the file path plus LF-normalized content. That closes the line-ending trap by construction.
-- *Ranking* differs between the two query tools. `search_code` ranks chunks by embedding similarity alone, with no lexical blend, and it reports an empty index as an error rather than as an empty answer a model would read as "no such code". `get_context` blends 0.6 semantic and 0.4 lexical when a usable embedding index exists, and ranks lexically alone when there is none. The bottom rung of the ladder, shipped as a feature.
+- *Ranking* differs between the two query tools. `search_code` ranks chunks by embedding similarity alone, with no lexical blend, and it reports an empty index as an error rather than as an empty answer a model would read as "no such code". `get_context` blends 0.6 semantic and 0.4 lexical when a usable embedding index exists, and ranks lexically alone when there is none. The bottom rung of the ladder, shipped as a feature. 4.0.0, published 2026-10-13, fixed a defect of exactly the kind [the box above](#query-time-hybrid-ranking) describes: a file's semantic rank was its chunks' position in the hit list but was normalized by the number of files, so a file found late in a long list scored below files the index never matched.
 - *Documents* such as `.docx` and `.pdf` flow through the same chunk-embed-index path as source code.
 
-The embedding model behind the semantic lane — bge-small-en-v1.5, and its pooling details — was covered in [Embeddings and similarity](../part1-fundamentals/embeddings.md). And before it searches, `search_code` re-indexes the already-indexed files that changed and prunes deleted ones, which is the verify-on-read pattern examined in [Part 5](../part5-capstone/case-verify-on-read.md). By default, a file added since the last index stays invisible to search until `index_repo` runs again. In 4.0.0, built but not yet published as of 2026-10-08, that refresh is [capped at 25 changed files per search](../part5-capstone/case-verify-on-read.md#what-would-change-it), with the result counting any it left stale.
+The embedding model behind the semantic lane — bge-small-en-v1.5, and its pooling details — was covered in [Embeddings and similarity](../part1-fundamentals/embeddings.md). And before it searches, `search_code` re-indexes the already-indexed files that changed and prunes deleted ones, which is the verify-on-read pattern examined in [Part 5](../part5-capstone/case-verify-on-read.md). By default, a file added since the last index stays invisible to search until `index_repo` runs again. Since 4.0.0, published 2026-10-13, that refresh is [capped at 25 changed files per search](../part5-capstone/case-verify-on-read.md#what-would-change-it), with the result counting any it left stale.
 
 ## Checkpoints
 

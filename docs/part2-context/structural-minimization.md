@@ -192,14 +192,14 @@ Details worth stealing:
 - **Honest budgets.** Every packed file gets a `// path:start-end` locator header, and it counts *against* the token budget. Anything delivered to the model costs window space.
 - **The stemming invariant, deployed.** Keywords drop stopwords and words under three characters, then strip one English suffix, longest first, with a minimum stem length of four. That is the prefix-plus-substring design above. "How does login validate" keeps `ValidateRequest` intact at Balanced.
 
-!!! warning "Evolving — verified 2026-10-08"
-    Sankshep 4.0.0 is built but not yet published as of 2026-10-08. Among the changes its changelog records, three alter how `get_context` packs and labels code:
+!!! warning "Evolving — verified 2026-10-14"
+    Sankshep 4.0.0, published 2026-10-13, changed how `get_context` packs and labels code in three ways its changelog records:
 
-    - **A file that does not fit arrives as its declarations.** 3.0.0 can only cut such a file at a line boundary, by position rather than relevance, or withhold it. 4.0.0 cuts it at its types and methods instead, and the ones the query is about go first, across every ranked file. Each piece carries a `// path:start-end Symbol` locator (`#` in Python and Ruby, as the last item says), and a `PARTIAL` header line names the files that came back in part. A file that fits whole comes back exactly as before. No benchmark has measured the benefit yet.
-    - **The header fits inside the budget.** The WARNING, NOTE and WITHHELD header lines name only as many paths as fit and count the rest, so the whole response fits `tokenBudget`. On 3.0.0 those lines are added on top of the budget, so a call that fills it comes back 120–150 tokens over.
+    - **A file that does not fit arrives as its declarations.** Up to 3.0.0 such a file could only be cut at a line boundary, by position rather than relevance, or withheld. 4.0.0 cuts it at its types and methods instead, and the ones the query is about go first, across every ranked file. Each piece carries a `// path:start-end Symbol` locator (`#` in Python and Ruby, as the last item says), and a `PARTIAL` header line names the files that came back in part. A file that fits whole comes back exactly as before. No benchmark has measured the benefit yet.
+    - **The header fits inside the budget.** The WARNING, NOTE and WITHHELD header lines name only as many paths as fit and count the rest, so the whole response fits `tokenBudget`. Up to 3.0.0 those lines were added on top of the budget, so a call that filled it came back 120–150 tokens over.
     - **Python and Ruby locators are `#` comments.** A `//` line reads as code in those languages.
 
-    Publication will change this box. Check Sankshep's [public changelog](https://nitinpawar28.github.io/sankshep-docs/changelog/) for a 4.0.0 entry.
+    This changes quickly; check Sankshep's [public changelog](https://nitinpawar28.github.io/sankshep-docs/changelog/) for current values.
 
 The payoff is measured, not claimed. Sankshep publishes key-point recall against compression for every level on its [public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/), and the [next chapter](measuring-quality.md) reads those numbers and shows how they are produced.
 
