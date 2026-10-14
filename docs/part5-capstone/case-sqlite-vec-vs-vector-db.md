@@ -14,7 +14,7 @@ Sankshep's retrieval pipeline is the one Part 2 taught.
 
 [Indexing](../part2-context/rag-for-code.md) chunks a repository symbol by symbol from the AST. Each chunk becomes a 384-dimensional, L2-normalized [embedding](../part1-fundamentals/embeddings.md), computed with a local ONNX model. The model choice is [its own case study](case-local-onnx-vs-cloud.md). Then the vectors get stored.
 
-At query time, the `search_code` [tool](../part3-mcp/primitives.md) first re-verifies the index against the working tree, which is [another case study](case-verify-on-read.md). In 4.0.0, built but not yet published as of 2026-10-08, that step [re-embeds at most 25 changed files per search](case-verify-on-read.md#what-would-change-it), and the result says how many it left stale. Then `search_code` runs k-nearest-neighbor search over the stored vectors and ranks by that similarity alone, with no lexical blend.
+At query time, the `search_code` [tool](../part3-mcp/primitives.md) first re-verifies the index against the working tree, which is [another case study](case-verify-on-read.md). Since 4.0.0, published 2026-10-13, that step [re-embeds at most 25 changed files per search](case-verify-on-read.md#what-would-change-it), and the result says how many it left stale. Then `search_code` runs k-nearest-neighbor search over the stored vectors and ranks by that similarity alone, with no lexical blend.
 
 The step this page cares about is the unglamorous one in the middle. *Stores the vectors.*
 

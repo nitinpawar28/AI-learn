@@ -137,8 +137,8 @@ The headline is Balanced, and it is the opposite of what most people expect: it 
 
 Aggressive's 0.10 is lossy by design, and published anyway. That is rule 2 in action.
 
-!!! warning "Evolving — verified 2026-10-08"
-    These are still the only published numbers, and they were measured on v3.0.0. Sankshep 4.0.0 — built, not yet published as of 2026-10-08 — changes what a call that fills its budget delivers, as [Structural minimization](structural-minimization.md#in-practice-sankshep) describes, and how a partly delivered file is credited, covered below. Nothing has been re-measured on it, so read the table, and the composed-versus-naive pair below, as v3.0.0's — compression included, credited under 3.0.0's rule for a file cut to fit. New figures on the [public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/) would replace these, chart included.
+!!! warning "Evolving — verified 2026-10-14"
+    These are still the only published numbers, and they were measured on v3.0.0, before the current release. Sankshep 4.0.0, published 2026-10-13, changes what a call that fills its budget delivers, as [Structural minimization](structural-minimization.md#in-practice-sankshep) describes, and how a partly delivered file is credited, covered below — and fixes a semantic-ranking defect [Retrieval for code](rag-for-code.md#query-time-hybrid-ranking) explains. Nothing has been re-measured on it, so read the table, and the composed-versus-naive pair below, as v3.0.0's — compression included, credited under 3.0.0's rule for a file cut to fit. New figures on the [public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/) would replace these, chart included.
 
 ### How much the judge itself moves
 
@@ -168,7 +168,7 @@ First, a published trade-off, also measured 2026-09-20 on v3.0.0. In a composed-
 
 Second, per ADR-0017, savings reports compare against the original size of the files actually delivered. Never against everything-in-scope divided by budget. Dollar figures were deleted from reports entirely, on the grounds that "a ratio whose numerator and denominator come from different universes is not a measurement."
 
-That rule still leaves a quieter loophole. On 3.0.0, a file cut to fit the budget counts as delivered at its full original size, so a 300-token excerpt of a 6,000-token file reports about 95% compression — almost all of it withholding. Sankshep 4.0.0, built but not yet published as of 2026-10-08, closes it: a truncated excerpt is credited with only the source its kept lines cover, and a file delivered in declaration pieces with those pieces' own source spans — never with the whole file.
+That rule still leaves a quieter loophole. Up to 3.0.0, a file cut to fit the budget counted as delivered at its full original size, so a 300-token excerpt of a 6,000-token file reported about 95% compression — almost all of it withholding. Sankshep 4.0.0, published 2026-10-13, closes it: a truncated excerpt is credited with only the source its kept lines cover, and a file delivered in declaration pieces with those pieces' own source spans — never with the whole file.
 
 And the honest non-claim. "Roundtrips avoided" — the idea that better context saves whole [agent-loop rounds](../part4-agents/cost-efficiency.md) — is explicitly not measured, so it is not claimed. The full story is in the capstone: [case study — measure what you ship](../part5-capstone/case-measure-what-you-ship.md).
 

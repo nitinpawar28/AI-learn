@@ -110,7 +110,7 @@ What it buys:
 - *A shared, remote index.* Verify-on-read assumes one local working tree to verify against. An index serving many machines has no single "the disk". That is one reason ADR-0019 keeps the core local-first and single-developer in scope.
 - *A latency budget below a stat scan.* If per-query latency must undercut gate one, freshness work has to move off the read path. And staleness windows return as an explicit, documented cost, rather than an accident.
 
-**In 4.0.0 — built, not yet published as of 2026-10-08 — the last of these fired, in a form this page did not predict.** The cost that outgrew the read path was not gate one's stat scan but gate two's re-embedding: the lumpy worst case above. The release's changelog gives the reason plainly — after a branch switch, one search could spend minutes re-embedding. So in 4.0.0 `search_code` re-embeds at most 25 changed files before answering, and its result header says how many indexed files it left stale. Later searches, `index_repo`, or the opt-in watcher catch them up.
+**In 4.0.0, published 2026-10-13, the last of these fired, in a form this page did not predict.** The cost that outgrew the read path was not gate one's stat scan but gate two's re-embedding: the lumpy worst case above. The release's changelog gives the reason plainly — after a branch switch, one search could spend minutes re-embedding. So in 4.0.0 `search_code` re-embeds at most 25 changed files before answering, and its result header says how many indexed files it left stale. Later searches, `index_repo`, or the opt-in watcher catch them up.
 
 That is the staleness window the last bullet anticipated, back as an explicit, documented cost. The change trades *correctness by construction* for something weaker but still honest: a bounded amount of re-embedding per search, with any staleness it leaves counted and announced in the result, never silent.
 
@@ -143,7 +143,7 @@ That is the staleness window the last bullet anticipated, back as an explicit, d
 
         With verify-on-read in place, a dead watcher costs only latency for the files the index holds, because the next read's gates reconcile every one of them. Removing the gates converts every watcher failure from a slowdown into silent wrong answers.
 
-        In 4.0.0 — built, not yet published as of 2026-10-08 — a search re-embeds at most 25 changed files and counts the rest in its result. So after a large change, a dead watcher also means a backlog of stale files lingers until later searches or `index_repo` work it off. That is still a different class of failure: counted and announced, not silent.
+        Since 4.0.0, published 2026-10-13, a search re-embeds at most 25 changed files and counts the rest in its result. So after a large change, a dead watcher also means a backlog of stale files lingers until later searches or `index_repo` work it off. That is still a different class of failure: counted and announced, not silent.
 
 3. Why does a git branch switch require no special handling in this design, and what would it require in a watcher-primary or timer-based design?
 
@@ -154,7 +154,7 @@ That is the staleness window the last bullet anticipated, back as an explicit, d
 
         Verify-on-read gets the hard case free, because the hard case is indistinguishable from the normal one.
 
-        Two documented limits apply. Files the switch *adds* are not in the index yet, and verify-on-read refreshes only files the index already holds, so new files come in when `index_repo` runs. And in 4.0.0 — built, not yet published as of 2026-10-08 — a switch that changes more than 25 indexed files is caught up over several searches, or by `index_repo` or the opt-in watcher, with each result counting the stale files meanwhile.
+        Two documented limits apply. Files the switch *adds* are not in the index yet, and verify-on-read refreshes only files the index already holds, so new files come in when `index_repo` runs. And since 4.0.0, published 2026-10-13, a switch that changes more than 25 indexed files is caught up over several searches, or by `index_repo` or the opt-in watcher, with each result counting the stale files meanwhile.
 
 ## Try it
 

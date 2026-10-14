@@ -167,9 +167,9 @@ The rule in one line: degrade quality gracefully; never degrade safety or honest
 
     Every rung returns fewer or plainer tokens. Never wrong ones.
 
-    In 4.0.0 — built, not yet published as of 2026-10-08 — one new rung bends that rule, and says so. Rather than spend minutes re-embedding after a branch switch, `search_code` re-embeds at most 25 changed files, answers, and says in its header how many it left stale — files whose hits may be out of date. The [verify-on-read case study](../part5-capstone/case-verify-on-read.md#what-would-change-it) covers how they catch up and what the trade costs.
+    Since 4.0.0, published 2026-10-13, one rung bends that rule, and says so. Rather than spend minutes re-embedding after a branch switch, `search_code` re-embeds at most 25 changed files, answers, and says in its header how many it left stale — files whose hits may be out of date. The [verify-on-read case study](../part5-capstone/case-verify-on-read.md#what-would-change-it) covers how they catch up and what the trade costs.
 
-    The fail-closed points are the other category. An HTTP server bound to a non-loopback address with no authentication refuses to start, as [Safety and judgment](safety.md) covers. An embedding-model download failing its SHA-256 check is discarded. And the maintainer's benchmark run fails closed: it exits non-zero when recall regresses. Because a judged run costs API calls, it runs on demand rather than on every merge.
+    The fail-closed points are the other category. An HTTP server bound to a non-loopback address refuses to start until it has been explicitly configured for that exposure, as [Safety and judgment](safety.md#in-practice-sankshep) sets out. An embedding-model download failing its SHA-256 check is discarded. And the maintainer's benchmark run fails closed: it exits non-zero when recall regresses. Because a judged run costs API calls, it runs on demand rather than on every merge.
 
     Quality bends. Integrity does not.
 
