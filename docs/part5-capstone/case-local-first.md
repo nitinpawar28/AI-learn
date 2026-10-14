@@ -40,7 +40,7 @@ The observability that does exist points at the user, not a vendor. The `sankshe
 
 **The one default network edge is narrow, verified, and removable.** The only egress by default is the one-time embedding-model download: SHA-256 manifest, atomic rename, fail-closed on mismatch. [The local-ONNX case study](case-local-onnx-vs-cloud.md) has the detail. And `SANKSHEP_MODEL_OFFLINE=1` removes even that, for air-gapped machines.
 
-The optional `--http` transport binds to loopback, and refuses to start exposed to the network without authentication unless you explicitly accept the exposure. [Safety and judgment](../part4-agents/safety.md) has the details.
+The optional `--http` transport binds to loopback, and refuses to start exposed to the network until you have explicitly configured it for that exposure. [Safety and judgment](../part4-agents/safety.md#in-practice-sankshep) owns the rule.
 
 The v1.8.0 security audit treated egress as a defended boundary, not an assumption.
 
@@ -160,7 +160,7 @@ What would *not* change it: convenience.
 
         The only default egress is a one-time, hash-verified model download, which `SANKSHEP_MODEL_OFFLINE=1` removes entirely. Metrics leave only if an operator opts in: `SANKSHEP_OTLP_ENDPOINT` pushes them to a collector the operator runs, and in HTTP mode `SANKSHEP_PROMETHEUS=1` lets the operator's own Prometheus scrape them. Either way they are counts and histograms, never code, paths, or queries.
 
-        And the `--http` transport binds to loopback, failing closed on unauthenticated non-loopback use.
+        And the `--http` transport binds to loopback, failing closed on a non-loopback bind it has not been explicitly configured for — the rule [Safety and judgment](../part4-agents/safety.md#in-practice-sankshep) owns.
 
         You can run the server air-gapped and observe that it still works. That is verification by construction, rather than by trust.
 

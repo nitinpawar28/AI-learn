@@ -206,7 +206,7 @@ The economics of the degradation ladder is covered in [cost and efficiency](cost
 When a tool server is audited, the findings rarely involve the model at all. The recurring classes are old ones.
 
 - **ReDoS**, or regular-expression denial of service. A pattern whose worst-case matching time explodes on crafted input, so one string can pin a CPU.
-- **Path escape.** A relative path that `../`s its way out of the tool's intended root.
+- **Path escape.** A relative path that `../`s its way out of the tool's intended root — or one whose letters stay inside it but which passes through a link that leads out. Checking a path's letters is not checking where it lands: resolve every component, link by link, then check.
 - **Decompression bombs.** A small archive that inflates to gigabytes when naively extracted.
 - **Unbounded traversal.** Recursive directory walks that a symlink cycle turns into an infinite loop or a stack overflow.
 - **Fail-open defaults.** An auth or verification check that warns and continues, instead of refusing.
@@ -225,7 +225,9 @@ Over HTTP (`--http`), Sankshep can authenticate callers with bearer API keys, co
 
 Over stdio — the default — there is no OAuth at all. Any credentials come from the environment.
 
-The HTTP listener binds to loopback by default, and fails closed. Bound to a non-loopback address with no authentication configured, it refuses to start, unless `SANKSHEP_ALLOW_UNAUTHENTICATED=1` is set explicitly. Insecurity must be opted into by name, never arrived at by default.
+The HTTP listener binds to loopback by default, and fails closed — twice over since 4.0.0. Bound to a non-loopback address with no authentication configured, it refuses to start unless `SANKSHEP_ALLOW_UNAUTHENTICATED=1` is set explicitly. And a routable bind now also requires `SANKSHEP_ALLOWED_HOSTS`, so that variable alone no longer lets one start.
+
+Authentication is not the only lock on a listener. A `Host` allow-list is the defense against DNS rebinding — a page in your browser re-points a name the attacker controls at your machine's address, and its requests reach a listener that only ever expected local callers — and with the list unset, the server accepted any `Host`, which left that defense off. Name the hosts your clients use, or set `*` to accept any `Host` deliberately; a list that names no host, or mixes `*` with names, is refused at startup too. Insecurity must be opted into by name, never arrived at by default — and `*` is that name.
 
 The trust model matches the first diagram in this chapter.
 
@@ -248,6 +250,8 @@ The first row is the trust model taken seriously.
 Even a tool that never leaves your machine treats the repository it reads as untrusted input. Because the `.gitignore` in a repo you just cloned was written by someone else.
 
 Since that release, the first row has gained a guarantee its timeout could not give. Every ignore pattern now compiles with .NET's non-backtracking regex engine, whose matching time is linear in the input length, as Sankshep's [security page](https://nitinpawar28.github.io/sankshep-docs/security/#hardening-verified-posture) states. A timeout bounds the damage. A linear-time engine removes the catastrophic case by construction.
+
+The second row has grown the same way, and the lesson is the one the bullet above states. Before 4.0.0, containment was decided by a path's letters — anchored to the repository root, as the table says — plus a look at where its last entry pointed. 4.0.0 resolves every path to where it really lands, link by link, before `get_context`, `index_repo` or `summarize_repo` reads it. Until then a directory that linked out of the repository, a file beneath one, or a link whose target passed through another outbound link all read files outside the served root while their letters looked contained. Such paths are now reported as escaping the served root; the index drops a stored key that a later checkout has put behind an outbound link, instead of re-reading it; and the root itself is resolved too, so a repository reached through a link — macOS's `/tmp` — no longer refuses links that stay inside it.
 
 The same distrust now reaches configuration. A served repository's own `appsettings.json` is not read as configuration on either transport. Before 2.0.0, such a file could re-bind the server to `0.0.0.0`.
 

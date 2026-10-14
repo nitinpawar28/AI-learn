@@ -169,7 +169,7 @@ The default is stdio, and its logging is stderr-only. That is exactly the reason
 
 Passing `--http` starts Streamable HTTP in stateless mode. That was a deliberate pairing, since Sankshep's tools are deterministic and independent, so there is no per-client state worth keeping. As of the 2026-07-28 revision, that choice stopped being a choice: statelessness is what the protocol now requires of everyone.
 
-Two further choices preview the security posture. The HTTP listener is loopback-bound, so out of the box it accepts connections only from the same machine. And it is fail-closed: bound to a non-loopback address with no authentication configured, it refuses to start unless the operator explicitly sets `SANKSHEP_ALLOW_UNAUTHENTICATED=1`.
+Two further choices preview the security posture. The HTTP listener is loopback-bound, so out of the box it accepts connections only from the same machine. And it is fail-closed: bound to a non-loopback address, it refuses to start until the operator has explicitly configured it for that exposure — [Safety and judgment](../part4-agents/safety.md#in-practice-sankshep) owns the rule and the variables behind it.
 
 Exposure requires an explicit, greppable decision. Silence defaults to safe.
 
