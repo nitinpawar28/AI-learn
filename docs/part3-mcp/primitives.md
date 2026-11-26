@@ -189,34 +189,34 @@ Sankshep — [the running example](../part0-orientation/running-example.md) — 
 
 ```mermaid
 flowchart TB
-    subgraph slane1["Tools — model-invoked (8)"]
+    subgraph slane1["Tools — model-invoked (7)"]
         direction LR
-        SM["The client executes<br/>calls the model emits"] --> ST1["get_context · search_code<br/>index_repo · summarize_repo"]
-        SM --> ST2["remember · recall<br/>export_decisions · token_report"]
+        SM["The client executes<br/>calls the model emits"] --> ST1["outline · find<br/>read · index"]
+        SM --> ST2["remember · recall<br/>report"]
     end
     subgraph slane2["Resource — application-invoked (1)"]
         direction LR
         SA["The client reads it<br/>on its own initiative"] --> SR["sankshep://stats"]
     end
-    subgraph slane3["Prompt — user-invoked (1)"]
+    subgraph slane3["Prompts — user-invoked (4)"]
         direction LR
-        SU["The user selects it<br/>in the client"] --> SP["compose_task_prompt"]
+        SU["The user selects it<br/>in the client"] --> SP["implement · explore<br/>architect · review"]
     end
 ```
 
 Each lane holds what the question predicts.
 
-The eight tools are verbs a model plausibly needs mid-task: fetching minimized context, searching code, indexing, remembering and recalling project facts, reporting token usage.
+The seven tools are verbs a model plausibly needs mid-task: outlining a directory, finding code, reading minimized context, indexing, remembering and recalling project facts, reporting token usage. 5.0.0 renamed every tool, with no aliases kept — `get_context` became `read`, `search_code` became `find`, `summarize_repo` became `outline` — and folded an eighth, `export_decisions`, into `recall` ([upgrade guide](https://nitinpawar28.github.io/sankshep-docs/upgrading-5.0/)).
 
 The one resource, `sankshep://stats`, uses a server-defined URI scheme and is a noun: the server's own statistics, read by a client or a curious human. No model initiative required.
 
-The one prompt, `compose_task_prompt`, is user-invoked deliberately. Per ADR-0013 it returns "a prompt, not an answer" — a deterministic composition of the task, retrieved code, and project conventions, which never calls an LLM. [Grounded prompting and composition](../part4-agents/grounded-prompting.md) walks through what it assembles.
+The four prompts are user-invoked deliberately, and each [returns a prompt, never an answer](https://nitinpawar28.github.io/sankshep-docs/tool-reference/#prompts). `implement` (until 5.0.0, `compose_task_prompt`) is, per ADR-0013, a deterministic composition of the task, retrieved code, and project conventions, which never calls an LLM; [Grounded prompting and composition](../part4-agents/grounded-prompting.md) walks through what it assembles. `explore`, `architect` and `review`, added in 5.0.0, each return a role's workflow — orient, locate, read, cite — followed by the user's question, scope or base commit. A user picks one to start a kind of work; the model then carries that work out with the tools.
 
 Two of this page's judgment calls trace to Sankshep ADRs.
 
 The error split comes from ADR-0016. Paths that do not resolve inside the repository fail loudly with `isError` and a readable message. They never return a partial success that the loop would mistake for an answer.
 
-The result shape comes from ADR-0015 through ADR-0018, which record the content-versus-structured-content deliberation. Both quoted rules above are that chain's lessons, and the outcome is that `get_context` returns a single plain-text content block and declares no output schema.
+The result shape comes from ADR-0015 through ADR-0018, which record the content-versus-structured-content deliberation. Both quoted rules above are that chain's lessons, and the outcome is that `read` returns a single plain-text content block and declares no output schema.
 
 ## Checkpoints
 

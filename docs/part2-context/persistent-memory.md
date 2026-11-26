@@ -111,7 +111,9 @@ This is a general persistence bug, but memory is unusually exposed to it. Proven
 
 ## In practice: Sankshep
 
-[Sankshep](../part0-orientation/running-example.md) exposes memory through three of its tools: `remember`, `recall`, and `export_decisions`. Tools are covered in [Part 3](../part3-mcp/primitives.md).
+[Sankshep](../part0-orientation/running-example.md) exposes memory through two of its tools, `remember` and `recall`. Tools are covered in [Part 3](../part3-mcp/primitives.md).
+
+Until 5.0.0 a third tool, `export_decisions`, wrote the decisions out as a `DECISIONS.md` file in the repository. 5.0.0 removed it: `recall` with `format=markdown` now *returns* that document's text, and the caller writes it wherever it wants ([tool reference](https://nitinpawar28.github.io/sankshep-docs/tool-reference/#recall)). The general point is worth keeping. A memory tool that returns text leaves the decision about the user's files to the user; one that writes them has quietly taken it, and since 5.0.0 no Sankshep tool overwrites a file in your repository.
 
 Its design maps onto this chapter's axes almost line by line.
 
@@ -144,14 +146,14 @@ sequenceDiagram
     S-->>C: facts in the tool result
 
     Note over C,DB: conventions — fetched by category
-    C->>S: compose_task_prompt (task)
+    C->>S: implement (task)
     S->>DB: SELECT WHERE category = 'convention'<br/>(never matched against task text)
     DB-->>S: all conventions, branch + global
 ```
 
 Both silent failure modes above come from Sankshep's own history.
 
-An earlier version matched conventions against the task text like any other memory, and they almost never surfaced in composed prompts. The shipped fix pulls category `convention` wholesale, with no relevance filter, whenever `compose_task_prompt` runs.
+An earlier version matched conventions against the task text like any other memory, and they almost never surfaced in composed prompts. The shipped fix pulls category `convention` wholesale, with no relevance filter, whenever the `implement` prompt runs.
 
 The timestamp story is real too. `datetime('now')` wrote timezone-less strings that were read back as local time. The fix was making UTC explicit at both ends.
 

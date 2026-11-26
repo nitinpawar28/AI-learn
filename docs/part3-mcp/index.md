@@ -45,6 +45,6 @@ When Part 3 is done, tools have a standard socket. [Part 4](../part4-agents/inde
 !!! example "In the wild: Sankshep"
     Most mechanisms in this part are ones Sankshep actually ships. Sankshep is the production server from [the running example](../part0-orientation/running-example.md).
 
-    It offers all three primitive kinds: tools, a prompt, and a resource. It supports both transports: stdio by default, Streamable HTTP via `--http`. And it documents client configuration for four IDEs.
+    It offers all three primitive kinds: tools, prompts, and a resource. It supports both transports: stdio by default, Streamable HTTP via `--http`. And it documents client configuration for four IDEs.
 
     Each chapter points back at the matching piece.

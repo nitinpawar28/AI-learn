@@ -174,7 +174,7 @@ This site avoids those verbs in their bare form, along with *thinks*, *believes*
 
 Every later page either uses mechanical phrasing, or puts the verb in quotes and links back to the definitions here.
 
-**"Decides."** When a page says a model "decides" to do something, here is what that means. Sampling produced a continuation naming that action — a structured tool call naming `search_code`, say — and a separate program, the client, ran it.
+**"Decides."** When a page says a model "decides" to do something, here is what that means. Sampling produced a continuation naming that action — a structured tool call naming `find`, say — and a separate program, the client, ran it.
 
 A "decision" is a probable continuation plus machinery that acts on it. [The agent loop](../part4-agents/agent-loop.md) rests entirely on this reading.
 
@@ -292,10 +292,10 @@ This two-source rule drives everything that follows. Choosing which tokens deser
 
     A timestamp at the top means every request has a unique prefix. Prefill then recomputes the whole prompt at full input price on every call, instead of skipping past a cached prefix. Volatile content belongs at the *end* of the context, or nowhere.
 
-**3. Rewrite this sentence to follow the anthropomorphism contract: "The model understood our codebase and decided to call `search_code`."**
+**3. Rewrite this sentence to follow the anthropomorphism contract: "The model understood our codebase and decided to call `find`."**
 
 ??? success "Answer"
-    One version that works: "With the task and the tool descriptions in context, sampling produced a structured tool call naming `search_code`, which the client ran."
+    One version that works: "With the task and the tool descriptions in context, sampling produced a structured tool call naming `find`, which the client ran."
 
     The mechanical version exposes the load-bearing fact. The description text in the context is what made that continuation probable.
 

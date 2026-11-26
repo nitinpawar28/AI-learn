@@ -100,13 +100,13 @@ The division exists for the maintainers. Template changes get code review. Groun
 
 ## In practice: Sankshep
 
-Sankshep ships this whole chapter as its single MCP prompt, `compose_task_prompt`. That is the user-invoked primitive from [tools, resources, and prompts](../part3-mcp/primitives.md).
+Sankshep ships this whole chapter as its MCP prompt `implement`, called `compose_task_prompt` until 5.0.0. That is the user-invoked primitive from [tools, resources, and prompts](../part3-mcp/primitives.md), and the only one of Sankshep's four prompts that composes code into the prompt itself.
 
 The request carries a task, the paths to draw code from (required), and a token budget defaulting to 4,000.
 
 That budget bounds the **code**. Remembered conventions are additive, on a separate budget of 600 tokens, so the prompt you get back is deliberately larger than the number you asked for. It runs [retrieval](../part2-context/rag-for-code.md) and the [minimizer](../part2-context/structural-minimization.md) at the Balanced level, using the task text as the collapse query. It pulls conventions from [memory](../part2-context/persistent-memory.md) wholesale by category, scoped to the current branch plus global entries, deduplicated.
 
-Finally it renders four sections in a fixed order: `# Task`, `# Relevant code (minimized)`, `# Project conventions`, `# Constraints`.
+Finally it renders four sections in a fixed order: `# Task`, `# Relevant code (minimized)`, `# Project conventions`, `# Constraints`. Since 5.0.0 it also says what it could *not* include — files withheld, cut, unreadable or skipped, named one by one, and conventions over their budget. Provenance covers absences too: a prompt that silently dropped a file reads as complete.
 
 ```mermaid
 flowchart TB
@@ -131,6 +131,8 @@ The crossed-out edge is the load-bearing one.
 ADR-0013 names the contract — "a prompt, not an answer" — and enforces it structurally. A build-time test walks the composition path's dependency closure, and fails if any model-client library appears in it. The rule is a failing test, not a convention.
 
 The payoff is everything this chapter promised. Identical inputs yield byte-identical prompts, so the composer is golden-tested. Composition costs zero model tokens. And the output works under any client's model-routing policy, because it never presumed one.
+
+Provenance can reach past the prompt into the answer. Since 5.0.0 Sankshep's `read` and `find` prefix every line they return with its source line number, `12|`, so a model can cite `Calculator.cs:12` for a claim without opening the file again, and a reviewer can check that citation in one step; `read` also accepts `path:12-40` and returns exactly those lines, unminimized. That is the [locator rule from retrieval](../part2-context/rag-for-code.md#assembling-the-context) taken down to the line. The numbers are the source file's own, so minimization leaves gaps in them rather than renumbering. The composed prompt is the exception: its code carries no line prefixes, so an answer that must cite reads the file with `read` ([tool reference](https://nitinpawar28.github.io/sankshep-docs/tool-reference/#read)).
 
 Whether the composed prompt actually beats a naive one is a measurable question. [Measuring context quality](../part2-context/measuring-quality.md) shows how Sankshep's evals answer it, unflattering results included.
 

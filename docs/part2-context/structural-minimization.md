@@ -185,19 +185,22 @@ flowchart LR
 
 Details worth stealing:
 
-- **Four transforms, three levels.** CommentStrip always runs, and Conservative keeps doc comments. BodyCollapse varies by level: Conservative collapses nothing, Balanced collapses only bodies with no query match, Aggressive collapses every body — the ones that match the query included — plus expression-bodied members. UnusedUsings is an Aggressive-only heuristic. WhitespaceNormalize protects string literals.
+- **Four transforms, three levels.** CommentStrip always runs, and Conservative keeps doc comments. BodyCollapse varies by level: Conservative collapses nothing, Balanced keeps only the bodies the query is most about — scored against the query's words, rarer words counting for more, at most twelve per file — and Aggressive collapses every body, the ones that match the query included, plus expression-bodied members. At any level, a method named in `symbols` keeps its body whole. UnusedUsings is an Aggressive-only heuristic. WhitespaceNormalize protects string literals.
 - **Re-parse after an edit.** Text edits invalidate every node offset in the old tree. So after a transform changes the text, the pipeline re-parses rather than juggling stale spans.
-- **Degrade, never throw.** A grammar that fails to load costs compression, not the request: that language's files go out unminimized. A file in a language Sankshep does not parse at all is skipped, not sent raw, as its [How it works](https://nitinpawar28.github.io/sankshep-docs/how-it-works/#7-why-this-design-saves-tokens) page says of HTML and SCSS.
+- **Degrade, never throw.** A grammar that fails to load costs compression, not the request: that language's files go out unminimized. A source file in a language Sankshep does not parse at all is skipped, not sent raw, as its [How it works](https://nitinpawar28.github.io/sankshep-docs/how-it-works/#7-why-this-design-saves-tokens) page says of HTML and SCSS.
 - **Published gaps.** Python and Ruby have no `bodies.scm`, so body collapse is skipped for them. That is a documented limitation, not a silent one.
 - **Honest budgets.** Every packed file gets a `// path:start-end` locator header, and it counts *against* the token budget. Anything delivered to the model costs window space.
+- **An elision says what it hid.** A collapsed body becomes `{ /* L18-21 elided */ }`, naming the source lines it stands for, and every surviving line keeps its own source line number. So a reader of minimized code can ask for exactly the lines that were removed — `read` accepts `path:18-21` and returns that range as written, never minimized. Why the numbers matter beyond that is a grounding question, covered in [Grounded prompting](../part4-agents/grounded-prompting.md#in-practice-sankshep).
 - **The stemming invariant, deployed.** Keywords drop stopwords and words under three characters, then strip one English suffix, longest first, with a minimum stem length of four. That is the prefix-plus-substring design above. "How does login validate" keeps `ValidateRequest` intact at Balanced.
 
-!!! warning "Evolving — verified 2026-10-14"
-    Sankshep 4.0.0, published 2026-10-13, changed how `get_context` packs and labels code in three ways its changelog records:
+!!! warning "Evolving — verified 2026-11-26"
+    Sankshep 4.0.0, published 2026-10-13, changed how `read` — called `get_context` until 5.0.0 — packs and labels code in three ways its changelog records, and all three still hold in 5.0.1:
 
     - **A file that does not fit arrives as its declarations.** Up to 3.0.0 such a file could only be cut at a line boundary, by position rather than relevance, or withheld. 4.0.0 cuts it at its types and methods instead, and the ones the query is about go first, across every ranked file. Each piece carries a `// path:start-end Symbol` locator (`#` in Python and Ruby, as the last item says), and a `PARTIAL` header line names the files that came back in part. A file that fits whole comes back exactly as before. No benchmark has measured the benefit yet.
     - **The header fits inside the budget.** The WARNING, NOTE and WITHHELD header lines name only as many paths as fit and count the rest, so the whole response fits `tokenBudget`. Up to 3.0.0 those lines were added on top of the budget, so a call that filled it came back 120–150 tokens over.
     - **Python and Ruby locators are `#` comments.** A `//` line reads as code in those languages.
+
+    5.0.0, published 2026-11-26, changed what Balanced keeps (the bodies the query is most about, at most twelve per file, instead of every body that mentions any query word), made the elision marker ASCII and line-citing, and numbered every line `read` returns. Like the 4.0.0 changes, none of this has been benchmarked yet.
 
     This changes quickly; check Sankshep's [public changelog](https://nitinpawar28.github.io/sankshep-docs/changelog/) for current values.
 

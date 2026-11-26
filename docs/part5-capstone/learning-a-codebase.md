@@ -71,7 +71,7 @@ Pick one representative operation and follow it through every layer. From the mo
 
 This beats reading modules one at a time, for the same reason [retrieval](../part2-context/rag-for-code.md) beats pasting whole files. A trace ranks code by relevance to a real execution path. And layers that looked opaque in isolation explain each other when you watch them hand off.
 
-For Sankshep, that trace is already written. [The whole picture](architecture.md) follows a single `get_context` call from client configuration through path resolution, ranking, parsing and transforms in rank order until the budget fills, and packing, to the savings report on stdout.
+For Sankshep, that trace is already written. [The whole picture](architecture.md) follows a single `read` call from client configuration through path resolution, ranking, parsing and transforms in rank order until the budget fills, and packing, to the savings report on stdout.
 
 Notice what it forces you to learn in passing. The [transport](../part3-mcp/transports.md), the [wire protocol](../part3-mcp/wire-protocol.md), and the internal pipeline — in their real order.
 
@@ -105,7 +105,7 @@ Facts are small and precise, so plain text and substring search are enough. That
 
 ```text
 [architecture] Core is BCL-only; the MCP SDK appears only in Server.   (ADR-0004)
-[behavior]     search_code refreshes first: mtime scan, then hash diff. (ADR-0006)
+[behavior]     semantic find refreshes first: mtime, then hash. (ADR-0006)
 [limit]        Python and Ruby keep their bodies — no body collapse.   (docs)
 ```
 

@@ -117,7 +117,7 @@ The risks are equally concrete.
 !!! example "In the wild: Sankshep"
     Sankshep is the deliberate counter-example. It refuses to route, because it refuses to call models at all.
 
-    It makes no LLM call at request time. `compose_task_prompt` returns "a prompt, not an answer" per ADR-0013, and a build-time test enforces that no model client can enter the composition path.
+    It makes no LLM call at request time. The `implement` prompt returns "a prompt, not an answer" per ADR-0013, and a build-time test enforces that no model client can enter the composition path.
 
     ```mermaid
     flowchart LR
@@ -163,11 +163,11 @@ The rule in one line: degrade quality gracefully; never degrade safety or honest
 !!! example "In the wild: Sankshep"
     Here is the fail-soft ladder.
 
-    A tree-sitter grammar that fails to load affects only its own language, whose files [pass through unminimized](../part2-context/structural-minimization.md). sqlite-vec unavailable means brute-force similarity in pure C#. An empty index means `get_context` ranks the files under its `paths` lexically. `search_code`, which has no lexical fallback, reports the empty index as an error instead, for the reason [Retrieval for code](../part2-context/rag-for-code.md#in-practice-sankshep) gives. And a request that would deliver zero tokens raises a loud tool-level error — `isError`, per ADR-0016 — rather than a silently empty success.
+    A tree-sitter grammar that fails to load affects only its own language, whose files [pass through unminimized](../part2-context/structural-minimization.md). sqlite-vec unavailable means brute-force similarity in pure C#. An empty index means `read` ranks the files under its `paths` lexically. Semantic `find`, which has no lexical fallback of its own, reports the empty index as an error instead — and the error names the way out, `find`'s `exact`, `regex` and `symbol` modes, which need no index — for the reason [Retrieval for code](../part2-context/rag-for-code.md#in-practice-sankshep) gives. And a request that would deliver zero tokens raises a loud tool-level error — `isError`, per ADR-0016 — rather than a silently empty success.
 
     Every rung returns fewer or plainer tokens. Never wrong ones.
 
-    Since 4.0.0, published 2026-10-13, one rung bends that rule, and says so. Rather than spend minutes re-embedding after a branch switch, `search_code` re-embeds at most 25 changed files, answers, and says in its header how many it left stale — files whose hits may be out of date. The [verify-on-read case study](../part5-capstone/case-verify-on-read.md#what-would-change-it) covers how they catch up and what the trade costs.
+    Since 4.0.0, published 2026-10-13, one rung bends that rule, and says so. Rather than spend minutes re-embedding after a branch switch, a semantic `find` re-embeds at most 25 changed files, answers, and says in its header how many it left stale — files whose hits may be out of date. The [verify-on-read case study](../part5-capstone/case-verify-on-read.md#what-would-change-it) covers how they catch up and what the trade costs.
 
     The fail-closed points are the other category. An HTTP server bound to a non-loopback address refuses to start until it has been explicitly configured for that exposure, as [Safety and judgment](safety.md#in-practice-sankshep) sets out. An embedding-model download failing its SHA-256 check is discarded. And the maintainer's benchmark run fails closed: it exits non-zero when recall regresses. Because a judged run costs API calls, it runs on demand rather than on every merge.
 

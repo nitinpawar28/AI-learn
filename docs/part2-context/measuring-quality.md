@@ -137,8 +137,8 @@ The headline is Balanced, and it is the opposite of what most people expect: it 
 
 Aggressive's 0.10 is lossy by design, and published anyway. That is rule 2 in action.
 
-!!! warning "Evolving — verified 2026-10-14"
-    These are still the only published numbers, and they were measured on v3.0.0, before the current release. Sankshep 4.0.0, published 2026-10-13, changes what a call that fills its budget delivers, as [Structural minimization](structural-minimization.md#in-practice-sankshep) describes, and how a partly delivered file is credited, covered below — and fixes a semantic-ranking defect [Retrieval for code](rag-for-code.md#query-time-hybrid-ranking) explains. Nothing has been re-measured on it, so read the table, and the composed-versus-naive pair below, as v3.0.0's — compression included, credited under 3.0.0's rule for a file cut to fit. New figures on the [public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/) would replace these, chart included.
+!!! warning "Evolving — verified 2026-11-26"
+    These are still the only published numbers, and they were measured on v3.0.0, two major releases before the current one. Sankshep 4.0.0, published 2026-10-13, changed what a call that fills its budget delivers, as [Structural minimization](structural-minimization.md#in-practice-sankshep) describes, and how a partly delivered file is credited, covered below — and fixed a semantic-ranking defect [Retrieval for code](rag-for-code.md#query-time-hybrid-ranking) explains. 5.0.0, published 2026-11-26, changed the engine again: Balanced keeps fewer bodies, the ones the query is most about. Nothing has been re-measured on either, so read the table, and the composed-versus-naive pair below, as v3.0.0's — compression included, credited under 3.0.0's rule for a file cut to fit. New figures on the [public benchmarks page](https://nitinpawar28.github.io/sankshep-docs/benchmarks/) would replace these, chart included.
 
 ### How much the judge itself moves
 
@@ -166,7 +166,7 @@ First, a published trade-off, also measured 2026-09-20 on v3.0.0. In a composed-
 
     That is a general detection method for any evaluation harness. Find a number in your report that *cannot* move unless the inputs move, and watch it. When it moves, your instrument is wrong, not your system.
 
-Second, per ADR-0017, savings reports compare against the original size of the files actually delivered. Never against everything-in-scope divided by budget. Dollar figures were deleted from reports entirely, on the grounds that "a ratio whose numerator and denominator come from different universes is not a measurement."
+Second, per ADR-0017, savings reports compare against the original size of the files actually delivered. Never against everything-in-scope divided by budget. Dollar figures were deleted from reports entirely, on the grounds that "a ratio whose numerator and denominator come from different universes is not a measurement." Since 5.0.0 the `report` tool goes one step further and separates two numbers people tend to blur: a per-call count of the tokens every tool *returned* — what those calls added to the caller's context — and, on a line of its own, the compression claim, computed only over the calls that minimize code ([tool reference](https://nitinpawar28.github.io/sankshep-docs/tool-reference/#report)). Usage is a cost; compression is a saving; adding them into one figure would make neither honest.
 
 That rule still leaves a quieter loophole. Up to 3.0.0, a file cut to fit the budget counted as delivered at its full original size, so a 300-token excerpt of a 6,000-token file reported about 95% compression — almost all of it withholding. Sankshep 4.0.0, published 2026-10-13, closes it: a truncated excerpt is credited with only the source its kept lines cover, and a file delivered in declaration pieces with those pieces' own source spans — never with the whole file.
 

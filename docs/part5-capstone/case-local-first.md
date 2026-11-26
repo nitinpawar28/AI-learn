@@ -36,7 +36,7 @@ There is no request-time network dependency to piggyback data onto.
 
 High-cardinality labels are the classic accidental-capture bug. One string interpolation, and your "anonymous usage metric" contains proprietary source. Keeping cardinality low means even the local metrics cannot capture repo content by mistake.
 
-The observability that does exist points at the user, not a vendor. The `sankshep://stats` resource and the `token_report` tool report locally, to you.
+The observability that does exist points at the user, not a vendor. The `sankshep://stats` resource and the `report` tool report locally, to you — and since 5.0.0 `sankshep report --repo <path>` prints the same report in a terminal, with no MCP client at all.
 
 **The one default network edge is narrow, verified, and removable.** The only egress by default is the one-time embedding-model download: SHA-256 manifest, atomic rename, fail-closed on mismatch. [The local-ONNX case study](case-local-onnx-vs-cloud.md) has the detail. And `SANKSHEP_MODEL_OFFLINE=1` removes even that, for air-gapped machines.
 
@@ -145,7 +145,7 @@ What would *not* change it: convenience.
 2. The honest cost of no telemetry is no fleet insight. How does Sankshep compensate, and what does the compensation *not* cover?
 
     ??? success "Answer"
-        It compensates with local measurement. An eval harness that drives the real shipped binary as a subprocess over stdio, per ADR-0008, with a regression gate that fails closed. Plus user-facing observability through `sankshep://stats` and `token_report`.
+        It compensates with local measurement. An eval harness that drives the real shipped binary as a subprocess over stdio, per ADR-0008, with a regression gate that fails closed. Plus user-facing observability through `sankshep://stats` and `report`.
 
         That answers "did quality regress on the corpus I can test?"
 
