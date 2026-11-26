@@ -26,7 +26,7 @@ Each addition is ordinary software, not model magic.
 
 One phrase needs defusing before it does damage.
 
-When this site says an agent "decides" to search the code, the [anthropomorphism contract](../part1-fundamentals/what-llms-do.md#the-anthropomorphism-contract) fixes the meaning. Sampling produced a continuation naming `search_code`, and the client ran it.
+When this site says an agent "decides" to search the code, the [anthropomorphism contract](../part1-fundamentals/what-llms-do.md#the-anthropomorphism-contract) fixes the meaning. Sampling produced a continuation naming `find`, and the client ran it.
 
 A decision is a probable continuation, plus machinery that acts on it. Everything in this chapter is that machinery.
 
@@ -76,8 +76,8 @@ sequenceDiagram
 
     U->>C: "Where is login validated?"
     C->>M: request: history + tool definitions
-    M-->>C: continuation with tool_use — search_code("login validation")
-    C->>S: tools/call — search_code
+    M-->>C: continuation with tool_use — find("login validation")
+    C->>S: tools/call — find
     S-->>C: result: matching code chunks
     C->>C: append result to history
     Note over C,M: iteration 2 — the history now contains the tool result
@@ -159,7 +159,7 @@ sequenceDiagram
     C->>M: history + tool definitions
     M-->>C: two tool_use blocks in one continuation
     par execute in parallel
-        C->>S1: tools/call — search_code
+        C->>S1: tools/call — find
         C->>S2: tools/call — recall
     end
     S1-->>C: code chunks
@@ -203,9 +203,9 @@ Those silent gaps, not the typing speed, are where an agent session's wall-clock
 !!! example "In the wild: Sankshep"
     Sankshep — the MCP server from [the running example](../part0-orientation/running-example.md) — sits at the `S` position in the sequence diagram, and nowhere else.
 
-    It never loops. Each of its 8 tools answers exactly one `tools/call` and returns.
+    It never loops. Each of its 7 tools answers exactly one `tools/call` and returns.
 
-    It never calls a model. Its `compose_task_prompt` output is assembled deterministically, and per ADR-0013 a build-time test enforces that no model client can even enter the composition path.
+    It never calls a model. Its `implement` prompt's output is assembled deterministically, and per ADR-0013 a build-time test enforces that no model client can even enter the composition path.
 
     Its contribution to the loop is indirect but real. It attacks bloat and result flooding by returning [minimized](../part2-context/structural-minimization.md), budget-packed context instead of raw files. So each lap adds fewer tokens to the history that every later lap re-sends.
 

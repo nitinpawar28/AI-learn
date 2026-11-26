@@ -129,11 +129,13 @@ A subagent is a curation instrument. It buys a clean window at the price of a lo
 
     Each `tools/call` arrives as a single self-contained request over [the wire protocol](../part3-mcp/wire-protocol.md). It looks identical whether the caller is a lone agent, an orchestrator, or a subagent three levels deep.
 
-    Sankshep leans into that. It never runs a loop of its own, and never calls a model at request time. Its `compose_task_prompt` is deterministic by ADR-0013, enforced by a build-time test.
+    Sankshep leans into that. It never runs a loop of its own, and never calls a model at request time. Its `implement` prompt is deterministic by ADR-0013, enforced by a build-time test.
 
     Because no tool call depends on conversation state held by the server, the answer depends only on the arguments and the repository's current state. So every topology on this page can share one server with no coordination.
 
     That is the transferable rule for tool builders. Keep tools free of conversation state and deterministic, and fan-out, pipelines, and worker pools all get your server for free.
+
+    Since 5.0.0 it also ships subagents, and they stay on the client's side of that line. `sankshep init` writes four role definitions — explorer, architect, implementer, reviewer — as files the client loads: Claude Code subagents, VS Code Copilot custom agents, a Cursor rule and an `AGENTS.md` section. The server runs none of them. What the files carry is this page's curation applied to tools: each role gets only the tools it needs, where the client supports restricting them, and the explorer and architect get no terminal at all. The [agents page](https://nitinpawar28.github.io/sankshep-docs/agents/) gives the reason in one line: an agent that can run a terminal and has no file-read tool tends to read files through the terminal, which costs more and cannot be cited by line.
 
 ## Checkpoints
 

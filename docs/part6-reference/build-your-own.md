@@ -668,7 +668,7 @@ The sampled `tool_use` blocks start skipping the tool. Or they reach for it with
 !!! example "In the wild: Sankshep"
     repo-notes is a deliberate miniature of [Sankshep](../part0-orientation/running-example.md)'s surface. `remember_note` and `recall_notes` mirror its `remember` and `recall` tools.
 
-    And the substring search is not something you would outgrow. Sankshep's recall is a SQL `LIKE` over a SQLite facts table, with facts never embedded, for the right-sizing reasons [Persistent memory](../part2-context/persistent-memory.md) taught. `notes://stats` mirrors `sankshep://stats`, and `summarize_notes` is a toy `compose_task_prompt`: both build their text deterministically, and under ADR-0013 Sankshep's composer is barred from calling any model by a build-time test. The disciplines transfer too.
+    And the substring search is not something you would outgrow. Sankshep's recall is a SQL `LIKE` over a SQLite facts table, with facts never embedded, for the right-sizing reasons [Persistent memory](../part2-context/persistent-memory.md) taught. `notes://stats` mirrors `sankshep://stats`, and `summarize_notes` is a toy version of its `implement` prompt: both build their text deterministically, and under ADR-0013 Sankshep's composer is barred from calling any model by a build-time test. The disciplines transfer too.
 
     stdio with stderr-only logging is its default. And under ADR-0016, a path that matches nothing fails loudly as a tool error with actionable text.
 

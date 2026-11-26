@@ -140,17 +140,19 @@ A small set of sharp, non-overlapping tools beats a large set of vague ones at a
 
 ## In practice: Sankshep
 
-Sankshep's toolbelt is a worked example of curation. Exactly 8 tools: `get_context`, `search_code`, `index_repo`, `summarize_repo`, `remember`, `recall`, `export_decisions`, `token_report`.
+Sankshep's toolbelt is a worked example of curation, and its 5.0.0 release re-curated it. Exactly 7 tools: `outline`, `find`, `read`, `index`, `remember`, `recall`, `report`.
 
-That sits comfortably below every threshold above, and each name is a verb-object pair covering one job.
+That sits comfortably below every threshold above. The redesign also applied two of the rules in the list. *Merge overlap*: `export_decisions` became `recall`'s `format=markdown`, and literal, regex and declaration search arrived as modes of the one `find` tool instead of as three near-twin tools. *Name the job*: the old verb-object names — `get_context`, `search_code`, `summarize_repo` — became bare verbs, `read`, `find`, `outline`, each one step of a workflow (orient, locate, read). The object they dropped is the one every tool on a single-repository server shares.
 
-One of them, `token_report`, exists purely for observability. Its output reports what the other tools saved, so the toolbelt carries its own measurement.
+The price is stated on Sankshep's [upgrade guide](https://nitinpawar28.github.io/sankshep-docs/upgrading-5.0/): no old name was kept as an alias, so every client configuration, prompt file or agent that named a 4.x tool stopped working until it was updated. The alternative has a cost this chapter already priced: aliases would have doubled the list of tools every model reads, with each pair a pair of near-twins. A breaking rename is paid once, by people; an alias is paid on every round, in tokens and selection accuracy.
+
+One tool, `report`, exists purely for observability. It records every tool and prompt call, with what each returned, and states what minimization saved on a line of its own, so the toolbelt carries its own measurement. [Measuring context quality](../part2-context/measuring-quality.md#in-practice-sankshep) explains why those two numbers are kept apart.
 
 Its error design follows ADR-0016. File paths anchor to the repository root, and a request naming paths that match nothing fails loudly with `isError`, rather than returning a quietly empty result.
 
 That is the actionable-error rule, chosen over the polite failure that would send a loop three rounds in the wrong direction.
 
-Its result design went through the content-versus-structured debate as a real ADR chain, 0015 through 0018. It landed on `get_context` returning one plain-text block with no output schema.
+Its result design went through the content-versus-structured debate as a real ADR chain, 0015 through 0018. It landed on `read` returning one plain-text block with no output schema.
 
 Two of that chain's conclusions restate this chapter in Sankshep's own words. Measure what is *delivered and consumed*, not what is emitted. And ship "one result in two encodings, not two payloads".
 

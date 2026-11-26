@@ -57,7 +57,7 @@ In the ADR's words: "a ratio whose numerator and denominator come from different
 
 This chain applied the two result-shape rules from [Tools, resources, and prompts](../part3-mcp/primitives.md) to Sankshep's own flagship tool. One result in two encodings, not two payloads. And measure delivered-and-consumed, not emitted.
 
-The outcome: `get_context` returns a single plain-text content block and declares no output schema. Because measurement at the window, not at the server's output, is what the savings numbers describe.
+The outcome: `read` (called `get_context` until 5.0.0) returns a single plain-text content block and declares no output schema. Because measurement at the window, not at the server's output, is what the savings numbers describe.
 
 The published results follow the same discipline.
 

@@ -148,7 +148,7 @@ flowchart TB
 
 The shape maps onto the anatomy directly.
 
-`Server` is layers 1 through 3: transport, SDK protocol layer, and the handlers behind Sankshep's eight tools, one prompt, and one resource. [Primitives](primitives.md) toured that surface.
+`Server` is layers 1 through 3: transport, SDK protocol layer, and the handlers behind Sankshep's seven tools, four prompts, and one resource. [Primitives](primitives.md) toured that surface.
 
 The subsystem projects, Minimizer and Memory, are layer 4. And `Sankshep.Core` at the bottom holds the shared contracts with *zero* non-BCL references. Not the SDK. Not even tree-sitter or SQLite.
 

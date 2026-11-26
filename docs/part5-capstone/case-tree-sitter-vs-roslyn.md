@@ -10,7 +10,7 @@ The mechanics of minimization were taught in [Structural minimization](../part2-
 
 ## The context
 
-Sankshep's minimizer runs on every `get_context` request. It parses source files, strips comments, collapses function bodies, and packs the survivors into a [token](../part1-fundamentals/tokens.md) budget.
+Sankshep's minimizer runs on every `read` request. It parses source files, strips comments, collapses function bodies, and packs the survivors into a [token](../part1-fundamentals/tokens.md) budget.
 
 Three properties of that job constrain the parser choice.
 

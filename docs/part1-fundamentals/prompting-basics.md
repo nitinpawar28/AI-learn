@@ -110,7 +110,7 @@ Follow that road to the end and the prompt stops being hand-written at all. A pr
 That is grounded prompting, covered in [Part 4](../part4-agents/grounded-prompting.md). It is also exactly where our running example goes.
 
 !!! example "In the wild: Sankshep"
-    [Sankshep](../part0-orientation/running-example.md) ships prompt assembly as an MCP prompt named `compose_task_prompt`.
+    [Sankshep](../part0-orientation/running-example.md) ships prompt assembly as an MCP prompt named `implement` (called `compose_task_prompt` before 5.0.0).
 
     It renders a four-section prompt: `# Task`, `# Relevant code (minimized)`, `# Project conventions`, `# Constraints`. That is this chapter's anatomy, with the parts filled in by machinery — instruction from the task, context from retrieved and minimized code, constraints stated outright.
 

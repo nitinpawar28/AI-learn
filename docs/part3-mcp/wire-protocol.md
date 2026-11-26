@@ -474,6 +474,8 @@ And the wire doubles as the test interface. Under ADR-0008, the eval harness lau
 
 What the benchmarks measure is what an IDE client receives, byte for byte.
 
+Since 5.0.0 Sankshep also fills the `instructions` field this chapter flagged. Its documentation says its `initialize` response — the handshake-era method described [earlier](#every-request-introduces-itself) — tells the client how to use the server: prefer `find` to grep, read `path:start-end` before an edit, cite from the `N|` line prefixes, and act on whatever the header says was not delivered ([How it works](https://nitinpawar28.github.io/sankshep-docs/how-it-works/#4-what-mcp-is-and-why-the-model-never-talks-to-your-code-directly)). That is guidance about the *workflow across* tools, which no single tool description can carry. Clients such as Claude Code load it at session start, but whether it reaches the model stays the client's choice.
+
 ## Checkpoints
 
 1. **Name the three JSON-RPC message shapes, and how to tell them apart from fields alone.**

@@ -12,7 +12,7 @@ If an interviewer gives you half a minute, this paragraph is the answer.
 
 Sankshep is a local-first .NET 10 MCP server.
 
-It exposes 8 [tools](../part3-mcp/primitives.md), 1 prompt, and 1 resource. That is all three MCP primitives. They run over [stdio](../part3-mcp/transports.md) by default, with a stateless, loopback-bound Streamable HTTP mode behind `--http`.
+It exposes 7 [tools](../part3-mcp/primitives.md), 4 prompts, and 1 resource. That is all three MCP primitives. They run over [stdio](../part3-mcp/transports.md) by default, with a stateless, loopback-bound Streamable HTTP mode behind `--http`.
 
 The code is four projects behind a [dependency fence](../part3-mcp/writing-a-server.md). A BCL-only core sits at the bottom. Around it: tree-sitter minimization, ONNX-plus-sqlite-vec retrieval, and SQLite memory. The MCP SDK is confined to the outermost project.
 
@@ -29,7 +29,7 @@ flowchart TB
         HTTP["Streamable HTTP — --http<br/>stateless · loopback-bound · fail-closed"]
     end
     subgraph BIN["One .NET 10 binary"]
-        SRV["Server — composition root<br/>the only project referencing the MCP SDK<br/>8 tools · 1 prompt · 1 resource"]
+        SRV["Server — composition root<br/>the only project referencing the MCP SDK<br/>7 tools · 4 prompts · 1 resource"]
         MIN["Minimizer<br/>tree-sitter parsing, token counting"]
         MEM["Memory<br/>SQLite, sqlite-vec, ONNX Runtime"]
         CORE["Sankshep.Core — BCL-only<br/>contracts + composer engine<br/>fence enforced by a CI test"]
@@ -72,13 +72,16 @@ The whole public surface fits in one table.
 
 | Surface | Primitive | What sits behind it | Taught in |
 | --- | --- | --- | --- |
-| `get_context`, `search_code`, `index_repo`, `summarize_repo` | tools | the retrieval index and the minimizer, over the working tree | [Retrieval for code](../part2-context/rag-for-code.md), [Structural minimization](../part2-context/structural-minimization.md) |
-| `remember`, `recall`, `export_decisions` | tools | the SQLite facts table — branch-scoped, never vectorized | [Persistent memory](../part2-context/persistent-memory.md) |
-| `token_report` | tool | observability over token spend | [Measuring context quality](../part2-context/measuring-quality.md), [Cost and efficiency](../part4-agents/cost-efficiency.md) |
-| `compose_task_prompt` | prompt | the composer engine in Core — deterministic, no model calls (ADR-0013) | [Grounded prompting and composition](../part4-agents/grounded-prompting.md) |
+| `outline`, `find`, `read`, `index` | tools | the retrieval index and the minimizer, over the working tree | [Retrieval for code](../part2-context/rag-for-code.md), [Structural minimization](../part2-context/structural-minimization.md) |
+| `remember`, `recall` | tools | the SQLite facts table — branch-scoped, never vectorized | [Persistent memory](../part2-context/persistent-memory.md) |
+| `report` | tool | observability over token spend: every call recorded, compression stated apart | [Measuring context quality](../part2-context/measuring-quality.md), [Cost and efficiency](../part4-agents/cost-efficiency.md) |
+| `implement` | prompt | the composer engine in Core — deterministic, no model calls (ADR-0013) | [Grounded prompting and composition](../part4-agents/grounded-prompting.md) |
+| `explore`, `architect`, `review` | prompts | fixed role workflows, the same text `sankshep init` writes into agent files | [Agents, subagents, and orchestration](../part4-agents/agents-subagents.md) |
 | `sankshep://stats` | resource | application-read statistics | [Tools, resources, and prompts](../part3-mcp/primitives.md) |
 
-The who-invokes rule from [Primitives](../part3-mcp/primitives.md) sorts this surface cleanly. Models invoke the tools. The application reads the resource. A person picks the prompt.
+Every name in that table dates from 5.0.0, which renamed the whole tool surface with no aliases; the [upgrade guide](https://nitinpawar28.github.io/sankshep-docs/upgrading-5.0/) maps the 4.x names (`get_context`, `search_code` and the rest) onto these.
+
+The who-invokes rule from [Primitives](../part3-mcp/primitives.md) sorts this surface cleanly. Models invoke the tools. The application reads the resource. A person picks a prompt.
 
 All three primitives, used as designed.
 
@@ -86,7 +89,7 @@ All three primitives, used as designed.
 
 This is the centerpiece.
 
-An agent working in your IDE needs code context. A `get_context` call travels the whole stack, carrying the query "how does login validate" and a 4,000-token budget.
+An agent working in your IDE needs code context. A `read` call travels the whole stack, carrying the query "how does login validate" and a 4,000-token budget.
 
 ```mermaid
 sequenceDiagram
@@ -101,13 +104,13 @@ sequenceDiagram
     S-->>C: protocol version, capabilities — tools, prompts, resources
     C->>S: notifications/initialized
     Note over C: the model emits a tool_use block, and the client translates it to MCP
-    C->>S: tools/call get_context — "how does login validate", budget 4,000
+    C->>S: tools/call read — "how does login validate", budget 4,000
     S->>S: resolve paths against the repo root — no match fails loudly (isError)
     S->>W: read the files under paths, straight from disk
     W-->>S: current source text
     S->>X: nearest chunks for the query, if a usable index exists
     X-->>S: a semantic rank per file — the index as it stands, not refreshed
-    S->>S: blend 0.6 semantic + 0.4 lexical, rank
+    S->>S: blend semantic + lexical, rank
     loop in rank order, until the budget is full
         S->>S: parse (tree-sitter), strip comments, re-parse, collapse non-query bodies, normalize whitespace
         S->>S: greedy pack into 4,000 tokens — locator headers counted
@@ -121,12 +124,12 @@ Step by step, with the chapter that taught each move:
 1. **Configuration.** A few lines in the IDE's config file name the binary and its arguments — the four client formats are in [Connecting servers to IDEs](../part3-mcp/ide-integration.md).
 2. **Spawn.** The client launches the server as a subprocess; stdout will carry only JSON-RPC, and all logging goes to stderr — the stdio discipline from [Transports](../part3-mcp/transports.md).
 3. **Handshake.** The client opens the session with `initialize`, naming its protocol version and capabilities; the server answers with the version it will speak and its own capabilities — tools, prompts, resources — and `notifications/initialized` closes the exchange. The revisions Sankshep's [public changelog](https://nitinpawar28.github.io/sankshep-docs/changelog/) says it answers, 2024-11-05 through 2025-11-25, all open this way. Under the 2026-07-28 revision there is no handshake at all: each request carries its version and capabilities in `_meta`, and `server/discover` reports what a server offers — both spelled out line by line in [The wire protocol](../part3-mcp/wire-protocol.md).
-4. **The call arrives.** The `tools/list` descriptions sit in the model's context; the model emits a `tool_use` block naming `get_context`, and the client translates it into a `tools/call` request — the two-protocol translation from [The wire protocol](../part3-mcp/wire-protocol.md); the description craft behind that selection is [Tool calling in depth](../part4-agents/tool-calling.md).
+4. **The call arrives.** The `tools/list` descriptions sit in the model's context; the model emits a `tool_use` block naming `read`, and the client translates it into a `tools/call` request — the two-protocol translation from [The wire protocol](../part3-mcp/wire-protocol.md); the description craft behind that selection is [Tool calling in depth](../part4-agents/tool-calling.md).
 5. **Path resolution.** Requested paths anchor to the repo root; a path matching nothing fails loudly as a tool error (`isError`, ADR-0016), so the miss reaches the model and can be corrected — the two failure channels from [The wire protocol](../part3-mcp/wire-protocol.md).
-6. **Read the working tree.** `get_context` reads the files under `paths` straight from disk, so the code it returns is current — the working tree, not a snapshot, is the truth. It consults the index only for ranking's semantic signal, and uses the index as it stands, without refreshing it. By default, keeping the index fresh is `search_code`'s job: verify-on-read re-checks indexed files on every search, and only `index_repo` discovers new ones. The freshness problem is [Retrieval for code](../part2-context/rag-for-code.md)'s; the design is the [verify-on-read case study](case-verify-on-read.md).
-7. **Rank.** Before anything is parsed, candidates are ordered by 0.6 semantic plus 0.4 lexical score — lexical over each file's original text — when a usable embedding index exists, and by lexical alone when it does not. That is the hybrid blend and the degradation ladder from [Retrieval for code](../part2-context/rag-for-code.md).
-8. **Parse and transform.** Only now does parsing start, in rank order, and only until the budget fills. Each file in a language Sankshep parses becomes a tree-sitter syntax tree, re-parsed whenever a transform changes its text. Comment stripping runs first, then query-targeted body collapse: stopwords drop, "login" and "validate" survive keyword extraction under the one-suffix stemming invariant, and `ValidateRequest` matches — its body stays intact while unrelated bodies collapse to signatures. All from [Structural minimization](../part2-context/structural-minimization.md).
-9. **Pack.** Greedy packing fills the 4,000-token budget, with every `// path:start-end` locator header counted against it — honest budgets, from [Structural minimization](../part2-context/structural-minimization.md). A file too big for what is left [arrives by its declarations](../part2-context/structural-minimization.md#in-practice-sankshep), the ones the query is about first, each cited by path, line range and symbol, and a `PARTIAL` header line names it; the header names or counts every ranked file it did not deliver, and its own lines fit inside the budget. That is 4.0.0's behavior, published 2026-10-13; the linked chapter has what 3.0.0 did instead. The benefit of packing by declarations has not been measured yet.
+6. **Read the working tree.** `read` reads the files under `paths` straight from disk, so the code it returns is current — the working tree, not a snapshot, is the truth. It consults the index only for ranking's semantic signal, and uses the index as it stands, without refreshing it. By default, keeping the index fresh is semantic `find`'s job: verify-on-read re-checks indexed files on every semantic search, and only `index` discovers new ones. The freshness problem is [Retrieval for code](../part2-context/rag-for-code.md)'s; the design is the [verify-on-read case study](case-verify-on-read.md).
+7. **Rank.** Before anything is parsed, candidates are ordered by a blend of semantic and lexical scores — lexical over each file's original text — when a usable embedding index exists, and by lexical alone when it does not. That is the hybrid blend and the degradation ladder from [Retrieval for code](../part2-context/rag-for-code.md).
+8. **Parse and transform.** Only now does parsing start, in rank order, and only until the budget fills. Each file in a language Sankshep parses becomes a tree-sitter syntax tree, re-parsed whenever a transform changes its text. Comment stripping runs first, then query-targeted body collapse: stopwords drop, "login" and "validate" survive keyword extraction under the one-suffix stemming invariant, and `ValidateRequest` matches. At Balanced, the bodies the query is most about stay intact, at most twelve per file, while the rest collapse to signatures, each elision marked with the source lines it stands for. All from [Structural minimization](../part2-context/structural-minimization.md).
+9. **Pack.** Greedy packing fills the 4,000-token budget, with every `// path:start-end` locator header counted against it — honest budgets, from [Structural minimization](../part2-context/structural-minimization.md). A file too big for what is left [arrives by its declarations](../part2-context/structural-minimization.md#in-practice-sankshep), the ones the query is about first, each cited by path, line range and symbol, and a `PARTIAL` header line names it; the header names or counts every ranked file it did not deliver, and its own lines fit inside the budget. That is 4.0.0's behavior, published 2026-10-13, and still 5.0.1's; the linked chapter has what 3.0.0 did instead. Since 5.0.0 every delivered line also carries its source line number, `N|`, so the answer can cite `path:N` — the [grounding](../part4-agents/grounded-prompting.md#in-practice-sankshep) step — and values that look like secrets come back masked, as [Safety and judgment](../part4-agents/safety.md#in-practice-sankshep) explains. The benefit of packing by declarations has not been measured yet.
 10. **Report.** The savings report compares delivered files only — never everything-in-scope divided by budget, and no dollar figures (ADR-0017) — the accounting rules from [Measuring context quality](../part2-context/measuring-quality.md).
 11. **Return.** One JSON-RPC frame on stdout; the client appends the result to the conversation and the model continues — back into [the agent loop](../part4-agents/agent-loop.md), which the client owns.
 
@@ -142,8 +145,8 @@ flowchart LR
         S["Sankshep server"]
         WT["Working tree —<br/>the source of truth"]
         FACTS["facts.db — SQLite facts table (WAL)<br/>id · category · text · source · branch · created_at"]
-        VEC["index.db — code chunks + vectors<br/>sqlite-vec vec0, cosine KNN<br/>(brute-force C# fallback)"]
-        STATS["stats.db — per-tool token counts<br/>no code, no paths"]
+        VEC["index.db — code + document chunks, vectors<br/>sqlite-vec vec0, cosine KNN<br/>(brute-force C# fallback)"]
+        STATS["stats.db — one row per tool call<br/>no code, no paths"]
         MC["ONNX model cache<br/>bge-small-en-v1.5"]
         S --> WT
         S --> FACTS
@@ -166,11 +169,11 @@ The facts table is the [right-sized memory design](../part2-context/persistent-m
 
 The vector index is sqlite-vec's `vec0`, with a pure-C# brute-force fallback. That is the [embedded-over-dedicated choice](case-sqlite-vec-vs-vector-db.md).
 
-The statistics behind `token_report` and `sankshep://stats` are per-tool token counts — no code, no paths.
+The statistics behind `report` and `sankshep://stats` are one row per tool or prompt call — the tool, its outcome, its time, the tokens it returned — plus the compression claim. No code, no paths. The index stores masked text only.
 
 The [embedding](../part1-fundamentals/embeddings.md) model is cached locally. The only network traffic the server starts by default is its one-time download, which is SHA-256-verified against a manifest, atomically renamed, and discarded on mismatch. Setting `SANKSHEP_MODEL_OFFLINE=1` removes even that edge.
 
-Telemetry is off by default, and there is no vendor for it to reach. The only outbound export is opt-in: set `SANKSHEP_OTLP_ENDPOINT`, and counts plus a folder-name tag and any team or instance labels you set — never code, paths, or queries — go to a collector you run. With nothing set, a socket-level test asserts that `get_context` opens zero outbound connections. The [local-first case study](case-local-first.md) treats that as a property you can verify, rather than a promise to trust.
+Telemetry is off by default, and there is no vendor for it to reach. The only outbound export is opt-in: set `SANKSHEP_OTLP_ENDPOINT`, and counts plus a folder-name tag and any team or instance labels you set — never code, paths, or queries — go to a collector you run. With nothing set, a socket-level test asserts that `read` opens zero outbound connections. The [local-first case study](case-local-first.md) treats that as a property you can verify, rather than a promise to trust.
 
 ## Where the judgment lives
 
@@ -192,7 +195,7 @@ An architecture is defined by its refusals as much as its features.
 
 Five of Sankshep's are deliberate.
 
-- **No model calls at request time.** `compose_task_prompt` returns "a prompt, not an answer" (ADR-0013), and a build-time test keeps every model-client library out of the composition path — the determinism argument from [Grounded prompting](../part4-agents/grounded-prompting.md).
+- **No model calls at request time.** The `implement` prompt returns "a prompt, not an answer" (ADR-0013), and a build-time test keeps every model-client library out of the composition path — the determinism argument from [Grounded prompting](../part4-agents/grounded-prompting.md).
 - **No routing.** Choosing which model serves a step belongs to the client, which owns the loop and pays the bill; a deterministic tool composes under any client's routing policy — the layering argument from [Cost and efficiency](../part4-agents/cost-efficiency.md).
 - **No telemetry by default.** Observability is local-only by default; any export is opt-in, and its low-cardinality metrics cannot accidentally capture code (ADR-0011) — the [local-first case study](case-local-first.md).
 - **No token pass-through.** With OAuth 2.1 configured, the HTTP tier is a resource server only: it validates tokens, never issues them, never forwards them (ADR-0012) — the confused-deputy material in [Safety and judgment](../part4-agents/safety.md).
@@ -207,12 +210,12 @@ That, more than any single subsystem, is the architecture.
 1. **"You have thirty seconds — describe the system."** Give the paragraph.
 
     ??? success "Answer"
-        A local-first .NET 10 MCP server: 8 tools, 1 prompt, 1 resource over stdio by default, plus a stateless loopback HTTP mode. Four projects behind a dependency fence — BCL-only core; tree-sitter minimization; ONNX + sqlite-vec retrieval; SQLite memory — with the MCP SDK confined to the outermost project. No model calls at request time, so outputs are deterministic; compression benchmarked against the shipped binary, paired with judged recall that carries the judge's own error bar.
+        A local-first .NET 10 MCP server: 7 tools, 4 prompts, 1 resource over stdio by default, plus a stateless loopback HTTP mode. Four projects behind a dependency fence — BCL-only core; tree-sitter minimization; ONNX + sqlite-vec retrieval; SQLite memory — with the MCP SDK confined to the outermost project. No model calls at request time, so outputs are deterministic; compression benchmarked against the shipped binary, paired with judged recall that carries the judge's own error bar.
 
-2. **"Walk me through what happens between the model emitting a `tool_use` block for `get_context` and the first byte of the result reaching it."**
+2. **"Walk me through what happens between the model emitting a `tool_use` block for `read` and the first byte of the result reaching it."**
 
     ??? success "Answer"
-        The client translates the block into an MCP `tools/call` request and writes it to the subprocess's stdin. The server resolves paths against the repo root (failing loudly with `isError` on a miss), reads the files straight from the working tree, and ranks them before parsing anything — 0.6 semantic + 0.4 lexical when a usable index exists, lexical alone when not. Then, in rank order and only until the budget fills, it parses each file it can with tree-sitter, strips comments, collapses bodies matching no query keyword, and packs greedily with locator headers counted. Last, it writes one JSON-RPC frame — minimized context plus savings report — to stdout. The client appends the result and the model continues.
+        The client translates the block into an MCP `tools/call` request and writes it to the subprocess's stdin. The server resolves paths against the repo root (failing loudly with `isError` on a miss), reads the files straight from the working tree, and ranks them before parsing anything — semantic blended with lexical when a usable index exists, lexical alone when not. Then, in rank order and only until the budget fills, it parses each file it can with tree-sitter, strips comments, keeps the bodies the query is most about and collapses the rest, and packs greedily with locator headers counted. Last, it writes one JSON-RPC frame — minimized, line-numbered context plus savings report — to stdout. The client appends the result and the model continues.
 
 3. **"Your server never calls an LLM. Isn't that a missing feature?"**
 
@@ -234,7 +237,7 @@ That, more than any single subsystem, is the architecture.
 Practise the skill this part exists to build: describing a system's architecture out loud, at three different depths, without notes.
 
 1. **The 30-second version.** Close this page and say — aloud, or written in one paragraph — what Sankshep is, what problem it solves, and the one design commitment that shapes everything else. Compare against [the 30-second version](#the-30-second-version). If yours took two minutes, you described the implementation instead of the shape.
-2. **The request trace.** Now walk one `get_context` call from the client's spawn to the returned frame, naming each subsystem it touches in order. Check against the [sequence diagram](#one-request-end-to-end). Missing a step is normal; the useful signal is *which* step, because that is the subsystem you have not really understood yet.
+2. **The request trace.** Now walk one `read` call from the client's spawn to the returned frame, naming each subsystem it touches in order. Check against the [sequence diagram](#one-request-end-to-end). Missing a step is normal; the useful signal is *which* step, because that is the subsystem you have not really understood yet.
 3. **The defence.** Pick any one step you just named and answer three questions about it: what alternative was available, what the chosen approach costs, and what would make you reverse it. If the third answer is "nothing", you are holding a belief rather than a decision — the case studies are where each one gets its flip condition.
 4. **Now do it for your own system.** Take a service you work on and produce the same three artefacts: a 30-second shape, one request traced end to end through named subsystems, and one decision defended with its alternative, its cost, and its reversal condition. This is the interview answer, and it is also the design-review answer.
 5. **Find your gap.** Whichever of the four steps was hardest tells you what to do next: step 1 means you lack a mental model, step 2 means you know components but not flow, step 3 means you inherited decisions without their rationale. [How to learn a codebase like this](learning-a-codebase.md) is organized around exactly those three failures.

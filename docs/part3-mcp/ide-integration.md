@@ -172,9 +172,9 @@ flowchart TD
 ```
 
 !!! example "In the wild: Sankshep"
-    [Sankshep](../part0-orientation/running-example.md) documents setup for each of these four clients in its public [install guide](https://nitinpawar28.github.io/sankshep-docs/install/#point-your-mcp-client-at-it). Same binary, and the same `servers`-versus-`mcpServers` split: its VS Code entry uses the legacy `.vscode/mcp.json`, keyed `servers`, which VS Code still reads.
+    [Sankshep](../part0-orientation/running-example.md) documents setup for each of these four clients in its public [install guide](https://nitinpawar28.github.io/sankshep-docs/install/#point-your-mcp-client-at-it). Same binary, and the same `servers`-versus-`mcpServers` split: as of 2026-11-26 its VS Code entry is the portable `.mcp.json` keyed `mcpServers`, which Claude Code reads too, with the legacy `.vscode/mcp.json` form keyed `servers` shown beside it as still working but deprecated.
 
-    That is because in practice the config dialect, not the server, is what varies per user. The split behind the gotcha above shows up in those shipped docs, not only on vendor pages.
+    That is because in practice the config dialect, not the server, is what varies per user. The split behind the gotcha above shows up in those shipped docs, not only on vendor pages. Since 5.0.0, `sankshep init` also writes the `.mcp.json` registration for you, and adds a `sankshep` entry only when the file has none, so your other servers are kept ([agents page](https://nitinpawar28.github.io/sankshep-docs/agents/)).
 
     The ladder is baked into its defaults too. stdio transport with stderr-only logging, so rung 2 holds by construction and rung 4 always has something to show.
 

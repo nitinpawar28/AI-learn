@@ -10,9 +10,9 @@ This case study reconstructs that decision, so you can defend one like it — or
 
 Sankshep's retrieval pipeline uses vectors in two places.
 
-At index time, `index_repo` embeds AST-aware chunks of the repository. [Retrieval for code](../part2-context/rag-for-code.md) covers the chunking.
+At index time, `index` embeds AST-aware chunks of the repository. [Retrieval for code](../part2-context/rag-for-code.md) covers the chunking.
 
-At query time, `search_code` ranks by embedding similarity alone, and the ranking stage inside `get_context` [blends scores at 0.6 semantic to 0.4 lexical](../part2-context/rag-for-code.md#in-practice-sankshep) when an embedding index exists. So the embedding model does all of `search_code`'s ranking and, when there is an index, 0.6 of `get_context`'s.
+At query time, `find` in its default semantic mode ranks by embedding similarity alone, and the ranking stage inside `read` [blends semantic and lexical scores](../part2-context/rag-for-code.md#in-practice-sankshep) when an embedding index exists. So the embedding model does all of semantic `find`'s ranking and, when there is an index, only part of `read`'s. (Before 5.0.0 these tools were `index_repo`, `search_code` and `get_context`.)
 
 These are [tools](../part3-mcp/primitives.md) an agent calls dozens of times per session. So whatever produces the vectors runs constantly.
 
@@ -94,7 +94,7 @@ bge-small-en-v1.5 is a good small model. It is not the best model, and no amount
 
 Two things bound the damage.
 
-First, in `get_context`'s ranking, embeddings carry only 0.6 of the weight. The 0.4 lexical component catches exactly the cases vectors blur, because identifiers are lexical gold — a query containing "validate" finds `ValidateRequest` with no semantics required. `search_code` has no such cushion: it ranks by embeddings alone, so a weaker model would show there first.
+First, in `read`'s ranking, embeddings carry only part of the weight. The lexical component catches exactly the cases vectors blur, because identifiers are lexical gold — a query containing "validate" finds `ValidateRequest` with no semantics required. Semantic `find` has no such cushion: it ranks by embeddings alone, so a weaker model would show there first. Since 5.0.0, though, a caller who knows the identifier need not use it — `find`'s `exact`, `regex` and `symbol` modes involve no embeddings at all.
 
 Second, the ceiling is watched rather than assumed. Which is what the next section is about.
 
@@ -112,7 +112,7 @@ If judged misses started tracing back to retrieval — the right chunks never su
 
 That is the retrieval bottleneck the ADR names. It is not yet a decision to swap the model — the same evidence also points at ranking and at chunk budgets, which are cheaper to change and were changed first — but it is exactly the signal the condition was written to catch, and the review is open rather than closed.
 
-Note what made the signal legible: every excerpt `get_context` delivers is headed by a locator naming its file and lines, and the harness sees exactly what a client sees. So each missed fact could be checked against the code that actually arrived. A recall number alone would have said quality was mediocre; the locators say where to look.
+Note what made the signal legible: every excerpt `get_context` (now `read`) delivers is headed by a locator naming its file and lines, and the harness sees exactly what a client sees. So each missed fact could be checked against the code that actually arrived. A recall number alone would have said quality was mediocre; the locators say where to look.
 
 In 4.0.0, published 2026-10-13, Sankshep took the cheaper route again. A file that does not fit what is left of the token budget is [delivered by its declarations](../part2-context/structural-minimization.md#in-practice-sankshep), with the ones the query is about first across every ranked file, so one large file no longer spends the whole budget on members nobody asked about. That aims at both kinds of miss above: what comes back from a large file is now chosen by the query rather than by position, and the budget it no longer spends can reach the relevant members of files ranked below it. Whether it recovers those facts has not been measured yet, so the model-swap review stays open.
 
@@ -138,7 +138,7 @@ The swap is contained — vectors in, vectors out. But it is a migration, not a 
     ??? success "Answer"
         Quality is one axis among several, and the binding constraints here are structural. Private code must not leave the machine. Queries must cost nothing at the margin. And the tool must work air-gapped. A hosted API fails all three by construction.
 
-        The quality gap is bounded in practice by hybrid ranking in `get_context`, where the 0.4 lexical weight catches identifier matches that vectors blur. `search_code` ranks by embeddings alone, so a weaker model shows there first. And the gap is monitored by recall evals rather than assumed away.
+        The quality gap is bounded in practice by hybrid ranking in `read`, where the lexical component catches identifier matches that vectors blur, and by `find`'s exact, regex and symbol modes, which use no embeddings. Semantic `find` ranks by embeddings alone, so a weaker model shows there first. And the gap is monitored by recall evals rather than assumed away.
 
         If those evals ever show retrieval is the bottleneck, the decision reverses on evidence. The choice is modest, not dogmatic.
 
